@@ -7,11 +7,12 @@ const key = new TextEncoder().encode(secretKey)
 
 export async function middleware(request: NextRequest) {
   const session = request.cookies.get('session')?.value
-  const isLoginPage = request.nextUrl.pathname.startsWith('/login')
+  const path = request.nextUrl.pathname
+  const isLoginPage = path.startsWith('/login')
 
   // Not logged in
   if (!session) {
-    if (!isLoginPage && request.nextUrl.pathname !== '/') {
+    if (!isLoginPage && path !== '/') {
       return NextResponse.redirect(new URL('/login', request.url))
     }
     return NextResponse.next()
@@ -20,14 +21,32 @@ export async function middleware(request: NextRequest) {
   // Logged in
   try {
     const parsed = await jwtVerify(session, key)
+    const role = parsed.payload.role as string || 'CASHIER'
     
     // Valid session but trying to access login page, redirect to dashboard
-    if (isLoginPage || request.nextUrl.pathname === '/') {
+    if (isLoginPage || path === '/') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
     
-    // (Optional) Role-based access control can be added here
-    // e.g. if (request.nextUrl.pathname.startsWith('/settings') && parsed.payload.role !== 'OWNER')
+    // ROLE-BASED ACCESS CONTROL (RBAC)
+    
+    // Admin & Cashier cannot access Owner-only routes
+    const ownerOnlyRoutes = ['/finance', '/reports', '/audit-logs', '/users', '/settings']
+    if (ownerOnlyRoutes.some(r => path.startsWith(r))) {
+      if (role !== 'OWNER') return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    // Cashier cannot access Admin routes
+    const adminRoutes = ['/products', '/stock', '/purchases', '/suppliers']
+    if (adminRoutes.some(r => path.startsWith(r))) {
+      if (role === 'CASHIER') return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    // Admin cannot access Cashier/POS routes
+    const cashierRoutes = ['/pos', '/customers']
+    if (cashierRoutes.some(r => path.startsWith(r))) {
+      if (role === 'ADMIN') return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
 
     return NextResponse.next()
   } catch (error) {
