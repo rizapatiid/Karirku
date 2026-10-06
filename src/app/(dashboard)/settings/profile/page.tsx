@@ -1,7 +1,8 @@
 import prisma from '@/lib/prisma'
 import { updateStoreProfile } from '@/actions/settings'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Upload, Store } from 'lucide-react'
+import Image from 'next/image'
 
 export default async function StoreProfilePage() {
   const store = await prisma.store.findFirst()
@@ -19,9 +20,33 @@ export default async function StoreProfilePage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <form action={updateStoreProfile as any} className="space-y-6">
+        {/* Note the encType for file uploads */}
+        <form action={updateStoreProfile as any} className="space-y-6" encType="multipart/form-data">
           <input type="hidden" name="id" value={store?.id || ''} />
+          <input type="hidden" name="existingLogoUrl" value={store?.logoUrl || ''} />
           
+          <div className="space-y-4 border-b pb-6">
+            <label className="text-sm font-medium text-gray-700 block">Logo Toko</label>
+            <div className="flex items-center gap-6">
+              <div className="w-24 h-24 bg-gray-100 border border-gray-200 rounded-xl flex items-center justify-center overflow-hidden">
+                {store?.logoUrl ? (
+                  <Image src={store.logoUrl} alt="Logo" width={96} height={96} className="object-contain w-full h-full" />
+                ) : (
+                  <Store size={32} className="text-gray-400" />
+                )}
+              </div>
+              <div className="flex-1 space-y-2">
+                <input 
+                  type="file" 
+                  name="logo" 
+                  accept="image/png, image/jpeg, image/jpg"
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 outline-none"
+                />
+                <p className="text-xs text-gray-500">Format yang didukung: JPG, PNG. Ukuran maksimal 2MB.</p>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Nama Toko <span className="text-red-500">*</span></label>
             <input 
@@ -66,4 +91,3 @@ export default async function StoreProfilePage() {
     </div>
   )
 }
-

@@ -4,6 +4,8 @@ import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getSession } from './auth'
+import fs from 'fs/promises'
+import path from 'path'
 
 async function checkAdminOrOwner() {
   const session = await getSession()
@@ -20,10 +22,30 @@ export async function updateStoreProfile(formData: FormData) {
     const phone = formData.get('phone') as string
     const address = formData.get('address') as string
 
+    // Handle Logo Upload
+    const logoFile = formData.get('logo') as File | null
+    let logoUrl = formData.get('existingLogoUrl') as string | null
+
+    if (logoFile && logoFile.size > 0) {
+      const bytes = await logoFile.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+      const ext = path.extname(logoFile.name) || '.png'
+      const filename = `logo-${Date.now()}${ext}`
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads')
+      
+      try {
+        await fs.mkdir(uploadDir, { recursive: true })
+      } catch (e) {}
+
+      const filepath = path.join(uploadDir, filename)
+      await fs.writeFile(filepath, buffer)
+      logoUrl = `/uploads/${filename}`
+    }
+
     if (id) {
       await prisma.store.update({
         where: { id },
-        data: { name, phone, address }
+        data: { name, phone, address, logoUrl }
       })
     }
   } catch (error) {
@@ -31,6 +53,7 @@ export async function updateStoreProfile(formData: FormData) {
     return { error: 'Gagal memperbarui profil toko' }
   }
   revalidatePath('/settings/profile')
+  revalidatePath('/kasir')
   redirect('/settings')
 }
 
@@ -97,3 +120,4 @@ export async function updatePaymentSettings(formData: FormData) {
   revalidatePath('/settings/payments')
   redirect('/settings')
 }
+
