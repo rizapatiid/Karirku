@@ -22,7 +22,7 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
   const [amountPaid, setAmountPaid] = useState<string>('')
   
   const [isProcessing, setIsProcessing] = useState(false)
-  const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null)
+  const [checkoutSuccess, setCheckoutSuccess] = useState<{invoice: string, id: string} | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const filteredProducts = useMemo(() => {
@@ -82,7 +82,7 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
     })
 
     if (result.success) {
-      setCheckoutSuccess(result.invoiceNumber!)
+      setCheckoutSuccess({ invoice: result.invoiceNumber!, id: result.saleId! })
       setCart([])
       setAmountPaid('')
     } else {
@@ -97,12 +97,11 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
       <div className="flex-1 flex flex-col items-center justify-center h-full bg-white rounded-xl shadow-sm border border-gray-200 p-8">
         <CheckCircle2 className="w-20 h-20 text-green-500 mb-4" />
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Transaksi Berhasil!</h2>
-        <p className="text-gray-500 mb-6">No. Invoice: <span className="font-mono font-medium text-gray-700">{checkoutSuccess}</span></p>
+        <p className="text-gray-500 mb-6">No. Invoice: <span className="font-mono font-medium text-gray-700">{checkoutSuccess.invoice}</span></p>
         
         <div className="flex gap-4">
-          <button className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition">
-            Cetak Struk
-          </button>
+          <a href={`/sales/${checkoutSuccess.id}/receipt`} target="_blank" className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition">
+            Cetak Struk</a>
           <button 
             onClick={() => setCheckoutSuccess(null)}
             className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
@@ -233,3 +232,4 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
     </div>
   )
 }
+
