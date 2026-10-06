@@ -191,24 +191,14 @@ export default function QueueClient({ initialQueues }: Props) {
             )}
           </button>
 
-          {/* Add Queue */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-3">
-            <h3 className="font-bold text-gray-700 flex items-center gap-2 text-sm"><Plus size={16} /> Tambah Antrian Baru</h3>
-            <input
-              type="text"
-              value={label}
-              onChange={e => setLabel(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleAddQueue()}
-              placeholder="Nama / Keterangan (opsional)"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-            <button
-              onClick={handleAddQueue}
-              disabled={isPending}
-              className="w-full py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-semibold text-sm rounded-lg transition"
-            >
-              + Tambah Antrian
-            </button>
+          {/* Info Card: Automatic Queue */}
+          <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-4 text-xs text-blue-800 space-y-1">
+            <p className="font-bold flex items-center gap-1.5 text-blue-900">
+              💡 Antrian Otomatis Terhubung
+            </p>
+            <p className="text-blue-700 leading-relaxed">
+              Setiap kali kasir menyelesaikan transaksi pembayaran di POS, nomor antrian akan dibuat dan ditambahkan secara otomatis ke daftar antrian di atas.
+            </p>
           </div>
         </div>
 
