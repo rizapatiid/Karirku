@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma'
-import { Search, Eye } from 'lucide-react'
+import { Search, Eye, ArrowRightLeft } from 'lucide-react'
 
 export default async function SalesPage() {
   const sales = await prisma.sale.findMany({
@@ -63,9 +63,14 @@ export default async function SalesPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-gray-400 hover:text-blue-600 transition" title="Lihat Detail">
-                      <Eye size={18} />
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      <button className="p-1.5 text-gray-400 hover:text-blue-600 transition" title="Lihat Detail">
+                        <Eye size={18} />
+                      </button>
+                      <a href={`/sales/${sale.id}/return`} className="p-1.5 text-gray-400 hover:text-red-600 transition" title="Retur Barang">
+                        <ArrowRightLeft size={18} />
+                      </a>
+                    </div>
                   </td>
                 </tr>
               ))}
