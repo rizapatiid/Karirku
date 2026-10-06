@@ -168,11 +168,11 @@ export default function PosClient({ initialProducts, initialCustomers }: { initi
           >
             <option value="">-- Pilih Pelanggan --</option>
             {initialCustomers.map(c => (
-              <option key={c.id} value={c.id}>{c.name} {c.phone ? () : ''}</option>
+              <option key={c.id} value={c.id}>{c.name} {c.phone ? ' (' + c.phone + ')' : ''}</option>
             ))}
           </select>
         </div>
-        </div>
+
         
         <div className="flex-1 p-4 overflow-y-auto">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -344,6 +344,8 @@ export default function PosClient({ initialProducts, initialCustomers }: { initi
     </div>
   )
 }
+
+
 
 
 
