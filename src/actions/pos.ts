@@ -76,27 +76,13 @@ export async function processCheckout(data: CheckoutData) {
 
     const changeAmount = data.amountPaid > total ? data.amountPaid - total : 0
 
-    // Generate Invoice Number TRX-YYYYMMDD-SEQUENCE
-    const today = new Date()
-    const dateStr = today.toISOString().slice(0,10).replace(/-/g, '')
-    const countToday = await prisma.sale.count({
-      where: {
-        createdAt: {
-          gte: new Date(today.setHours(0,0,0,0)),
-          lt: new Date(today.setHours(23,59,59,999))
-        }
-      }
-    })
-    const invoiceNumber = `TRX-${dateStr}-${String(countToday + 1).padStart(5, '0')}`
-
     // TRANSACTION BLOCK (ACID)
     const result = await prisma.$transaction(async (tx) => {
-      // Calculate today's Queue Number
-      const startOfDay = new Date()
-      startOfDay.setHours(0, 0, 0, 0)
-      const endOfDay = new Date()
-      endOfDay.setHours(23, 59, 59, 999)
+      const now = new Date()
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
 
+      // 1. Calculate today's Queue Number
       const lastQueueToday = await tx.queue.findFirst({
         where: {
           createdAt: { gte: startOfDay, lte: endOfDay }
@@ -105,10 +91,42 @@ export async function processCheckout(data: CheckoutData) {
       })
       const queueNumber = (lastQueueToday?.number || 0) + 1
 
+      // 2. Generate Invoice Number inside transaction
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const dateStr = `${year}${month}${day}`
+
+      const lastSaleToday = await tx.sale.findFirst({
+        where: {
+          createdAt: { gte: startOfDay, lte: endOfDay }
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+
+      let nextSeq = 1
+      if (lastSaleToday && lastSaleToday.invoiceNumber) {
+        const parts = lastSaleToday.invoiceNumber.split('-')
+        const lastSeq = parseInt(parts[parts.length - 1], 10)
+        if (!isNaN(lastSeq) && lastSeq >= nextSeq) {
+          nextSeq = lastSeq + 1
+        }
+      }
+
+      // Double check count to be extra safe
+      const totalToday = await tx.sale.count({
+        where: { createdAt: { gte: startOfDay, lte: endOfDay } }
+      })
+      if (totalToday >= nextSeq) {
+        nextSeq = totalToday + 1
+      }
+
+      const invoiceNumber = `TRX-${dateStr}-${String(nextSeq).padStart(5, '0')}`
+
       // Get store if available
       const store = await tx.store.findFirst()
 
-      // 1. Create Sale
+      // 3. Create Sale
       const sale = await tx.sale.create({
         data: {
           invoiceNumber,
@@ -130,7 +148,7 @@ export async function processCheckout(data: CheckoutData) {
         }
       })
 
-      // 1.1 Automatically create Queue entry for live queue tracking board
+      // 4. Automatically create Queue entry for live queue tracking board
       await tx.queue.create({
         data: {
           storeId: store?.id,
@@ -140,7 +158,7 @@ export async function processCheckout(data: CheckoutData) {
         }
       })
 
-      // 2. Create Payment
+      // 5. Create Payment
       await tx.payment.create({
         data: {
           saleId: sale.id,
@@ -150,7 +168,7 @@ export async function processCheckout(data: CheckoutData) {
         }
       })
 
-      // 3 & 4. Update Stock & Create Stock Movements
+      // 6. Update Stock & Create Stock Movements
       for (const item of orderItemsToCreate) {
         const dbProduct = dbProducts.find(p => p.id === item.productId)!
         
@@ -163,7 +181,7 @@ export async function processCheckout(data: CheckoutData) {
           data: {
             productId: item.productId,
             type: 'SALE',
-            quantity: -item.quantity, // Negative because it's going out
+            quantity: -item.quantity,
             stockBefore: dbProduct.stock,
             stockAfter: dbProduct.stock - item.quantity,
             referenceType: 'SALE',
@@ -174,14 +192,14 @@ export async function processCheckout(data: CheckoutData) {
         })
       }
 
-      // 5. Create Cash Transaction if CASH
+      // 7. Create Cash Transaction if CASH
       if (data.paymentMethod === 'CASH') {
         await tx.cashTransaction.create({
           data: {
             type: 'SALE',
             referenceType: 'SALE',
             referenceId: sale.id,
-            amount: total, // The actual revenue received
+            amount: total,
             userId: user.id,
             transactionDate: new Date(),
             description: `Penjualan ${invoiceNumber}`
@@ -189,7 +207,7 @@ export async function processCheckout(data: CheckoutData) {
         })
       }
 
-      // 6. Audit Log
+      // 8. Audit Log
       await tx.auditLog.create({
         data: {
           userId: user.id,
