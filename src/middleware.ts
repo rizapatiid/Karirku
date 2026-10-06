@@ -53,7 +53,7 @@ export async function middleware(request: NextRequest) {
 
   try {
     const parsed = await jwtVerify(session, key)
-    const role = (parsed.payload.role as string) || 'CASHIER'
+    const role = (parsed.payload.role as string) || 'KASIR'
 
     // Redirect from login / root to correct home
     if (isLoginPage || path === '/') {
@@ -76,7 +76,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // ── CASHIER: only allow their routes ──
-    if (role === 'CASHIER') {
+    if (role === 'KASIR') {
       if (CASHIER_BLOCKED.some(r => path.startsWith(r))) {
         return NextResponse.redirect(new URL('/kasir', request.url))
       }
@@ -95,3 +95,4 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 }
+

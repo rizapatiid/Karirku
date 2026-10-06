@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const role = session.role || 'CASHIER'
+  const role = session.role || 'KASIR'
 
   const dashboardHref = role === 'OWNER' ? '/owner' : (role === 'ADMIN' ? '/admin' : '/kasir')
   const dashboardLabel = role === 'OWNER' ? 'Dasbor Pemilik' : (role === 'ADMIN' ? 'Dasbor Gudang' : 'Mesin Kasir')
@@ -27,17 +27,17 @@ export default async function DashboardLayout({
     {
       group: 'Utama',
       items: [
-        { href: dashboardHref, icon: LayoutDashboard, label: dashboardLabel, roles: ['OWNER', 'ADMIN', 'CASHIER'] },
+        { href: dashboardHref, icon: LayoutDashboard, label: dashboardLabel, roles: ['OWNER', 'ADMIN', 'KASIR'] },
       ]
     },
     {
       group: 'Transaksi',
       items: [
-        { href: '/kasir',    icon: ShoppingCart,   label: 'Buka POS Kasir',      roles: ['OWNER', 'CASHIER'] },
+        { href: '/kasir',    icon: ShoppingCart,   label: 'Buka POS Kasir',      roles: ['OWNER', 'KASIR'] },
         { href: '/sales',    icon: FileText,        label: 'Riwayat Penjualan',   roles: ['OWNER', 'ADMIN'] },
-        { href: '/sales',    icon: ClipboardList,   label: 'Transaksi Saya',      roles: ['CASHIER'] },
-        { href: '/queue',    icon: Users2,          label: 'Antrian Pelanggan',   roles: ['OWNER', 'ADMIN', 'CASHIER'] },
-        { href: '/customers',icon: Users,           label: 'Pelanggan',           roles: ['OWNER', 'CASHIER'] },
+        { href: '/sales',    icon: ClipboardList,   label: 'Transaksi Saya',      roles: ['KASIR'] },
+        { href: '/queue',    icon: Users2,          label: 'Antrian Pelanggan',   roles: ['OWNER', 'ADMIN', 'KASIR'] },
+        { href: '/customers',icon: Users,           label: 'Pelanggan',           roles: ['OWNER', 'KASIR'] },
       ]
     },
     {
@@ -76,14 +76,14 @@ export default async function DashboardLayout({
 
   // Role badge colors
   const roleBadge: Record<string, string> = {
-    OWNER:   'bg-purple-100 text-purple-700',
-    ADMIN:   'bg-blue-100 text-blue-700',
-    CASHIER: 'bg-green-100 text-green-700',
+    OWNER: 'bg-purple-100 text-purple-700',
+    ADMIN: 'bg-blue-100 text-blue-700',
+    KASIR: 'bg-green-100 text-green-700',
   }
   const roleLabel: Record<string, string> = {
-    OWNER:   'Pemilik',
-    ADMIN:   'Admin Gudang',
-    CASHIER: 'Kasir',
+    OWNER: 'Pemilik',
+    ADMIN: 'Admin Gudang',
+    KASIR: 'Kasir',
   }
 
   return (
@@ -160,3 +160,4 @@ export default async function DashboardLayout({
     </div>
   )
 }
+
