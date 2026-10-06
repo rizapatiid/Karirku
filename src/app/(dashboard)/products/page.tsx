@@ -45,7 +45,6 @@ export default async function ProductsPage() {
             <Plus size={18} />
             <span>Cetak Barcode</span>
           </a>
-          </Link>
         </div>
       </div>
 
