@@ -16,7 +16,7 @@ export default function CreateSupplierPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <form action={createSupplier} className="space-y-6">
+        <form action={createSupplier as any} className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Nama Perusahaan / Supplier <span className="text-red-500">*</span></label>
             <input 
@@ -78,3 +78,4 @@ export default function CreateSupplierPage() {
     </div>
   )
 }
+

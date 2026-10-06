@@ -11,7 +11,7 @@ type Product = {
   stock: number
   price: number
   category: string
-  unit: string
+  unit: string | null
 }
 
 type CartItem = Product & { quantity: number }
@@ -311,6 +311,8 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
     </div>
   )
 }
+
+
 
 
 

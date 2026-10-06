@@ -57,7 +57,7 @@ export default async function SuppliersPage() {
                     </div>
                     {sup.name}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{sup.contactPerson || '-'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{sup.contact || '-'}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{sup.phone || '-'}</td>
                   <td className="px-6 py-4 text-sm font-bold text-gray-900 text-center">
                     {sup._count.purchases}
@@ -84,3 +84,4 @@ export default async function SuppliersPage() {
     </div>
   )
 }
+

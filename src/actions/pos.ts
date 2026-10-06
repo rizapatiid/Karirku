@@ -47,7 +47,7 @@ export async function processCheckout(data: CheckoutData) {
       where: { id: { in: productIds } }
     })
 
-    const orderItemsToCreate = []
+    const orderItemsToCreate: any[] = []
 
     for (const item of data.items) {
       const dbProduct = dbProducts.find(p => p.id === item.productId)
@@ -102,7 +102,7 @@ export async function processCheckout(data: CheckoutData) {
           subtotal,
           discount: data.discount,
         tax: data.tax || 0,
-          tax: 0,
+          
           total,
           paidAmount: data.amountPaid,
           changeAmount,
@@ -187,3 +187,4 @@ export async function processCheckout(data: CheckoutData) {
     return { success: false, error: error.message }
   }
 }
+

@@ -16,7 +16,7 @@ export default function CreateExpensePage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <form action={createExpense} className="space-y-6">
+        <form action={createExpense as any} className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Keterangan / Nama Pengeluaran</label>
             <input 
@@ -51,3 +51,4 @@ export default function CreateExpensePage() {
     </div>
   )
 }
+

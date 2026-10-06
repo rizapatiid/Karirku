@@ -22,7 +22,7 @@ export default async function StockAdjustmentPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <form action={adjustStock} className="space-y-6">
+        <form action={adjustStock as any} className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Pilih Produk <span className="text-red-500">*</span></label>
             <select name="productId" required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
@@ -37,10 +37,10 @@ export default async function StockAdjustmentPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Tipe Penyesuaian <span className="text-red-500">*</span></label>
               <select name="type" required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                <option value="ADJUSTMENT_ADD">Stok Lebih (Tambah)</option>
-                <option value="ADJUSTMENT_MINUS">Stok Kurang (Kurangi)</option>
+                <option value="ADJUSTMENT">Stok Lebih (Tambah)</option>
+                <option value="ADJUSTMENT">Stok Kurang (Kurangi)</option>
                 <option value="DAMAGE">Barang Rusak (Kurangi)</option>
-                <option value="LOSS">Barang Hilang (Kurangi)</option>
+                <option value="LOST">Barang Hilang (Kurangi)</option>
               </select>
             </div>
             
@@ -80,3 +80,5 @@ export default async function StockAdjustmentPage() {
     </div>
   )
 }
+
+

@@ -11,7 +11,8 @@ export async function adjustStock(formData: FormData) {
     if (!session) throw new Error('Unauthenticated')
 
     const productId = formData.get('productId') as string
-    const type = formData.get('type') as 'ADJUSTMENT_ADD' | 'ADJUSTMENT_MINUS' | 'DAMAGE' | 'LOSS'
+    const rawType = formData.get('type') as string
+    const type = (rawType === 'LOSS' ? 'LOST' : (rawType.startsWith('ADJUSTMENT') ? 'ADJUSTMENT' : rawType)) as any
     const quantity = Number(formData.get('quantity'))
     const note = formData.get('note') as string
 
@@ -24,7 +25,7 @@ export async function adjustStock(formData: FormData) {
       if (!product) throw new Error('Produk tidak ditemukan')
 
       let stockChange = quantity
-      if (type === 'ADJUSTMENT_MINUS' || type === 'DAMAGE' || type === 'LOSS') {
+      if (rawType === 'ADJUSTMENT_MINUS' || type === 'DAMAGE' || type === 'LOST') {
         stockChange = -Math.abs(quantity)
       } else {
         stockChange = Math.abs(quantity)
@@ -73,3 +74,6 @@ export async function adjustStock(formData: FormData) {
   revalidatePath('/products')
   redirect('/stock')
 }
+
+
+

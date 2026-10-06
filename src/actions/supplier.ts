@@ -11,7 +11,7 @@ export async function createSupplier(formData: FormData) {
     if (!session) throw new Error('Unauthenticated')
 
     const name = formData.get('name') as string
-    const contactPerson = formData.get('contactPerson') as string
+    const contact = formData.get('contactPerson') as string
     const phone = formData.get('phone') as string
     const email = formData.get('email') as string
     const address = formData.get('address') as string
@@ -24,7 +24,7 @@ export async function createSupplier(formData: FormData) {
       data: {
         code,
         name,
-        contactPerson: contactPerson || null,
+        contact: contact || null,
         phone: phone || null,
         email: email || null,
         address: address || null,
@@ -49,3 +49,5 @@ export async function createSupplier(formData: FormData) {
   revalidatePath('/suppliers')
   redirect('/suppliers')
 }
+
+

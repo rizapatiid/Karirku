@@ -19,7 +19,7 @@ export default async function StoreProfilePage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <form action={updateStoreProfile} className="space-y-6">
+        <form action={updateStoreProfile as any} className="space-y-6">
           <input type="hidden" name="id" value={store?.id || ''} />
           
           <div className="space-y-2">
@@ -66,3 +66,4 @@ export default async function StoreProfilePage() {
     </div>
   )
 }
+
