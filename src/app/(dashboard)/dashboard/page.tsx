@@ -1,7 +1,8 @@
 import prisma from '@/lib/prisma'
-import { DollarSign, ShoppingBag, AlertTriangle, TrendingUp, Package } from 'lucide-react'
+import { DollarSign, ShoppingBag, AlertTriangle, TrendingUp, Package, Trophy } from 'lucide-react'
 import Link from 'next/link'
 import DashboardChart from './components/DashboardChart'
+import TopProductsChart from './components/TopProductsChart'
 
 export default async function DashboardPage() {
   const today = new Date()
@@ -81,6 +82,25 @@ export default async function DashboardPage() {
     revenue: chartDataMap[key]
   }))
 
+  // 5. Top 5 Best Selling Products (All Time or Month)
+  const topItemsRaw = await prisma.saleItem.groupBy({
+    by: ['productId'],
+    _sum: { quantity: true },
+    orderBy: { _sum: { quantity: 'desc' } },
+    take: 5
+  })
+  
+  const productIds = topItemsRaw.map(t => t.productId)
+  const products = await prisma.product.findMany({ where: { id: { in: productIds } } })
+  
+  const topProductsData = topItemsRaw.map(t => {
+    const p = products.find(prod => prod.id === t.productId)
+    return {
+      name: p ? p.name.substring(0, 15) + (p.name.length > 15 ? '...' : '') : 'Unknown',
+      value: t._sum.quantity || 0
+    }
+  })
+
   const formatRupiah = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num)
 
   return (
@@ -139,33 +159,47 @@ export default async function DashboardPage() {
           <DashboardChart data={chartData} />
         </div>
 
-        {/* Low Stock Widget */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-gray-800 flex items-center gap-2">
-              <Package size={18} className="text-orange-500" /> Peringatan Stok
+        <div className="space-y-6">
+          {/* Top Selling Products Widget */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Trophy size={18} className="text-yellow-500" /> Top 5 Produk Terlaris
             </h3>
-            <Link href="/products" className="text-sm text-blue-600 hover:underline">Lihat Semua</Link>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto pr-2 space-y-3">
-            {lowStockProducts.length === 0 ? (
-              <div className="text-center text-gray-500 text-sm py-10">Stok semua barang aman.</div>
+            {topProductsData.length > 0 ? (
+              <TopProductsChart data={topProductsData} />
             ) : (
-              lowStockProducts.map(p => (
-                <div key={p.id} className="flex justify-between items-center p-3 bg-red-50/50 border border-red-100 rounded-lg">
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">{p.name}</p>
-                    <p className="text-xs text-gray-500">SKU: {p.sku}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="inline-flex items-center justify-center px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded">
-                      Sisa {p.stock}
-                    </span>
-                  </div>
-                </div>
-              ))
+              <div className="text-center text-gray-500 text-sm py-10">Belum ada data penjualan.</div>
             )}
+          </div>
+
+          {/* Low Stock Widget */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <Package size={18} className="text-orange-500" /> Peringatan Stok
+              </h3>
+              <Link href="/products" className="text-sm text-blue-600 hover:underline">Lihat Semua</Link>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+              {lowStockProducts.length === 0 ? (
+                <div className="text-center text-gray-500 text-sm py-6">Stok semua barang aman.</div>
+              ) : (
+                lowStockProducts.map(p => (
+                  <div key={p.id} className="flex justify-between items-center p-3 bg-red-50/50 border border-red-100 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">{p.name}</p>
+                      <p className="text-xs text-gray-500">SKU: {p.sku}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="inline-flex items-center justify-center px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded">
+                        Sisa {p.stock}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>

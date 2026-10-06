@@ -4,14 +4,18 @@ import PrintButton from './PrintButton'
 
 export default async function ReceiptPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params
-  const sale = await prisma.sale.findUnique({
-    where: { id: resolvedParams.id },
-    include: {
-      items: { include: { product: true } },
-      user: true,
-      customer: true
-    }
-  })
+  
+  const [sale, store] = await Promise.all([
+    prisma.sale.findUnique({
+      where: { id: resolvedParams.id },
+      include: {
+        items: { include: { product: true } },
+        user: true,
+        customer: true
+      }
+    }),
+    prisma.store.findFirst()
+  ])
 
   if (!sale) redirect('/sales')
 
@@ -22,9 +26,9 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
       <div className="bg-white p-6 w-full max-w-sm shadow-lg print:shadow-none print:w-full print:max-w-full">
         {/* Header Struk */}
         <div className="text-center mb-6 border-b border-dashed border-gray-300 pb-4">
-          <h1 className="text-xl font-bold uppercase tracking-widest text-black">KASIRKU</h1>
-          <p className="text-xs text-gray-500 mt-1">Jl. Contoh Alamat No. 123, Kota</p>
-          <p className="text-xs text-gray-500">Telp: 0812-3456-7890</p>
+          <h1 className="text-xl font-bold uppercase tracking-widest text-black">{store?.name || 'KASIRKU'}</h1>
+          <p className="text-xs text-gray-500 mt-1">{store?.address || 'Alamat Toko Belum Diatur'}</p>
+          <p className="text-xs text-gray-500">Telp: {store?.phone || '-'}</p>
         </div>
 
         {/* Info Transaksi */}

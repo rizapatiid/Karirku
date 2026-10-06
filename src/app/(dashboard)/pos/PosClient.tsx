@@ -176,35 +176,43 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
 
       {/* Kanan: Keranjang */}
       <div className="w-full lg:w-[400px] flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="font-bold text-gray-800 flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5" />
-            Pesanan
-          </h2>
-          <div className="flex gap-2">
-            {heldOrders.length > 0 && (
-              <select 
-                onChange={(e) => handleLoadOrder(e.target.value)}
-                className="text-xs border border-gray-300 rounded px-2 py-1 outline-none bg-white text-gray-700"
-                value=""
+                          <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="font-bold text-gray-800 flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5" />
+              Pesanan
+            </h2>
+            <div className="flex gap-2">
+              {heldOrders.length > 0 && (
+                <select 
+                  onChange={(e) => handleLoadOrder(e.target.value)}
+                  className="text-xs border border-gray-300 rounded px-2 py-1 outline-none bg-white text-gray-700 max-w-[100px]"
+                  value=""
+                >
+                  <option value="" disabled>Panggil ({heldOrders.length})</option>
+                  {heldOrders.map(o => <option key={o.id} value={o.id}>{o.id}</option>)}
+                </select>
+              )}
+              <button 
+                onClick={handleHoldOrder}
+                disabled={cart.length === 0}
+                className="text-xs bg-orange-100 text-orange-700 font-bold px-2 py-1 rounded disabled:opacity-50 hover:bg-orange-200 transition"
+                title="Simpan Antrean (Hold)"
               >
-                <option value="" disabled>Panggil ({heldOrders.length})</option>
-                {heldOrders.map(o => <option key={o.id} value={o.id}>{o.id}</option>)}
-              </select>
-            )}
-            <button 
-              onClick={handleHoldOrder}
-              disabled={cart.length === 0}
-              className="text-xs bg-orange-100 text-orange-700 font-bold px-2 py-1 rounded disabled:opacity-50 hover:bg-orange-200 transition"
-              title="Simpan Antrean (Hold)"
-            >
-              Hold
-            </button>
-            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
-              {cart.length}
-            </span>
+                Hold
+              </button>
+              <button 
+                onClick={() => { setCart([]); setAmountPaid(''); }}
+                disabled={cart.length === 0}
+                className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded disabled:opacity-50 hover:bg-red-200 transition"
+                title="Kosongkan Keranjang"
+              >
+                <Trash2 size={14} />
+              </button>
+              <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
+                {cart.length}
+              </span>
+            </div>
           </div>
-        </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {cart.length === 0 ? (
@@ -311,6 +319,7 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
     </div>
   )
 }
+
 
 
 
