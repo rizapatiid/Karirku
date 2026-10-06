@@ -13,27 +13,21 @@ export async function login(formData: FormData) {
   const username = formData.get('username') as string
   const password = formData.get('password') as string
 
+  let dest = '/dashboard'
+
   try {
     const user = await prisma.user.findUnique({
       where: { username },
       include: { role: true }
     })
 
-    if (!user) {
-      return { error: 'Username atau password salah' }
-    }
-
-    if (user.status !== 'ACTIVE') {
-      return { error: 'Akun Anda tidak aktif' }
-    }
+    if (!user) return { error: 'Username atau password salah' }
+    if (user.status !== 'ACTIVE') return { error: 'Akun Anda tidak aktif' }
 
     const isValid = await bcrypt.compare(password, user.passwordHash)
-    if (!isValid) {
-      return { error: 'Username atau password salah' }
-    }
+    if (!isValid) return { error: 'Username atau password salah' }
 
-    // Buat JWT Token
-    const expires = new Date(Date.now() + 10 * 60 * 60 * 1000) // 10 jam
+    const expires = new Date(Date.now() + 10 * 60 * 60 * 1000)
     const session = await new SignJWT({ 
       userId: user.id, 
       username: user.username,
@@ -45,11 +39,9 @@ export async function login(formData: FormData) {
       .setExpirationTime('10h')
       .sign(key)
 
-    // Simpan ke HTTP-only cookie
     const cookieStore = await cookies()
     cookieStore.set('session', session, { expires, httpOnly: true, path: '/' })
 
-    // Log aktivitas
     await prisma.auditLog.create({
       data: {
         userId: user.id,
@@ -59,12 +51,14 @@ export async function login(formData: FormData) {
       }
     })
 
+    dest = user.role.name === 'CASHIER' ? '/pos' : '/dashboard'
+
   } catch (error) {
     console.error(error)
     return { error: 'Terjadi kesalahan sistem' }
   }
 
-  redirect('/dashboard')
+  redirect(dest)
 }
 
 export async function logout() {
@@ -81,11 +75,11 @@ export async function logout() {
           userId,
           action: 'LOGOUT',
           module: 'AUTH',
-          description: 'User logout'
+          description: `User berhasil logout`
         }
       })
     } catch (e) {
-      // Abaikan jika token invalid saat logout
+      // ignore invalid token on logout
     }
   }
 

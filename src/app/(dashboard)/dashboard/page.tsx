@@ -1,7 +1,6 @@
 import { getSession } from '@/actions/auth'
 import OwnerDashboard from './OwnerDashboard'
 import AdminDashboard from './AdminDashboard'
-import CashierDashboard from './CashierDashboard'
 import { redirect } from 'next/navigation'
 
 export default async function DashboardController() {
@@ -13,7 +12,7 @@ export default async function DashboardController() {
   }
 
   if (session.role === 'CASHIER') {
-    return <CashierDashboard />
+    redirect('/pos') // Fallback safety
   }
 
   // Default to OWNER view

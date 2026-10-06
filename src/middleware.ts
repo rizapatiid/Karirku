@@ -23,9 +23,10 @@ export async function middleware(request: NextRequest) {
     const parsed = await jwtVerify(session, key)
     const role = parsed.payload.role as string || 'CASHIER'
     
-    // Valid session but trying to access login page, redirect to dashboard
+    // Valid session but trying to access login page, redirect to correct default page
     if (isLoginPage || path === '/') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      const dest = role === 'CASHIER' ? '/pos' : '/dashboard'
+      return NextResponse.redirect(new URL(dest, request.url))
     }
     
     // ROLE-BASED ACCESS CONTROL (RBAC)
@@ -36,10 +37,10 @@ export async function middleware(request: NextRequest) {
       if (role !== 'OWNER') return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
-    // Cashier cannot access Admin routes
-    const adminRoutes = ['/products', '/stock', '/purchases', '/suppliers']
+    // Cashier cannot access Admin routes OR Dashboard
+    const adminRoutes = ['/products', '/stock', '/purchases', '/suppliers', '/dashboard']
     if (adminRoutes.some(r => path.startsWith(r))) {
-      if (role === 'CASHIER') return NextResponse.redirect(new URL('/dashboard', request.url))
+      if (role === 'CASHIER') return NextResponse.redirect(new URL('/pos', request.url)) // Send back to POS
     }
 
     // Admin cannot access Cashier/POS routes

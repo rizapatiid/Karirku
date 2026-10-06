@@ -15,7 +15,7 @@ export default async function DashboardLayout({
   const role = session.role || 'CASHIER' // Default safe role
 
   const menuItems = [
-    { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['OWNER', 'ADMIN', 'CASHIER'] },
+    { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['OWNER', 'ADMIN'] },
     { href: '/pos', icon: ShoppingCart, label: 'POS / Kasir', roles: ['OWNER', 'CASHIER'] },
     { href: '/sales', icon: FileText, label: 'Riwayat Penjualan', roles: ['OWNER', 'ADMIN', 'CASHIER'] },
     { href: '/products', icon: Package, label: 'Produk', roles: ['OWNER', 'ADMIN'] },
@@ -73,3 +73,4 @@ export default async function DashboardLayout({
     </div>
   )
 }
+
