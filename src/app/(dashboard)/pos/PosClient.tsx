@@ -14,10 +14,11 @@ type Product = {
   unit: string | null
 }
 
+type Customer = { id: string, name: string, phone: string | null }
 type CartItem = Product & { quantity: number }
 type HeldOrder = { id: string, time: Date, cart: CartItem[] }
 
-export default function PosClient({ initialProducts }: { initialProducts: Product[] }) {
+export default function PosClient({ initialProducts, initialCustomers }: { initialProducts: Product[], initialCustomers: Customer[] }) {
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<CartItem[]>([])
   const [heldOrders, setHeldOrders] = useState<HeldOrder[]>([])
@@ -26,6 +27,16 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
   const [isProcessing, setIsProcessing] = useState(false)
   const [checkoutSuccess, setCheckoutSuccess] = useState<{invoice: string, id: string} | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && search.trim() !== '') {
+      const exactMatch = initialProducts.find(p => p.sku.toLowerCase() === search.toLowerCase())
+      if (exactMatch) {
+        addToCart(exactMatch)
+        setSearch('')
+      }
+    }
+  }
 
   const filteredProducts = useMemo(() => {
     return initialProducts.filter(p => 
@@ -96,6 +107,7 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
     const result = await processCheckout({
       items: cart.map(item => ({ productId: item.id, quantity: item.quantity, price: item.price })),
       paymentMethod: 'CASH',
+      customerId: selectedCustomer || undefined,
       amountPaid: paid,
       discount: discount, tax: taxAmount
     })
@@ -136,17 +148,30 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
     <div className="flex flex-col lg:flex-row gap-6 h-full min-h-[calc(100vh-8rem)]">
       {/* Kiri: Daftar Produk */}
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b border-gray-200">
-          <div className="relative">
+                <div className="p-4 border-b border-gray-200 flex gap-4">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
             <input 
               type="text" 
               placeholder="Cari produk atau scan barcode..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleKeyDown}
+              autoFocus
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
+          <select
+            value={selectedCustomer}
+            onChange={(e) => setSelectedCustomer(e.target.value)}
+            className="w-[200px] px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700"
+          >
+            <option value="">-- Pilih Pelanggan --</option>
+            {initialCustomers.map(c => (
+              <option key={c.id} value={c.id}>{c.name} {c.phone ? () : ''}</option>
+            ))}
+          </select>
+        </div>
         </div>
         
         <div className="flex-1 p-4 overflow-y-auto">
@@ -319,6 +344,7 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
     </div>
   )
 }
+
 
 
 

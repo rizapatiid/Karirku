@@ -3,14 +3,20 @@ import PosClient from './PosClient'
 
 export default async function PosPage() {
   // Fetch products and format them for the client
-  const products = await prisma.product.findMany({
-    where: { status: 'ACTIVE' },
-    include: {
-      category: true,
-      unit: true,
-    },
-    orderBy: { name: 'asc' }
-  })
+  const [products, customers] = await Promise.all([
+    prisma.product.findMany({
+      where: { status: 'ACTIVE' },
+      include: {
+        category: true,
+        unit: true,
+      },
+      orderBy: { name: 'asc' }
+    }),
+    prisma.customer.findMany({
+      where: { status: 'ACTIVE' },
+      orderBy: { name: 'asc' }
+    })
+  ])
 
   // Ensure strict formatting (avoiding Prisma decimal issues on client)
   const plainProducts = products.map(p => ({
@@ -24,5 +30,11 @@ export default async function PosPage() {
     imageUrl: p.imageUrl
   }))
 
-  return <PosClient initialProducts={plainProducts} />
+  const plainCustomers = customers.map(c => ({
+    id: c.id,
+    name: c.name,
+    phone: c.phone
+  }))
+
+  return <PosClient initialProducts={plainProducts} initialCustomers={plainCustomers} />
 }
