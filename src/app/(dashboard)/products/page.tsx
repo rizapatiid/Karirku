@@ -32,10 +32,16 @@ export default async function ProductsPage() {
           <h2 className="text-2xl font-bold text-gray-800">Manajemen Produk</h2>
           <p className="text-gray-500 text-sm mt-1">Kelola data inventaris dan produk jualan Anda</p>
         </div>
-        <Link href="/products/create" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition">
-          <Plus size={18} />
-          <span>Tambah Produk</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/categories/create" className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition border border-gray-200">
+            <Plus size={18} />
+            <span>Kategori</span>
+          </Link>
+          <Link href="/products/create" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition">
+            <Plus size={18} />
+            <span>Tambah Produk</span>
+          </Link>
+        </div>
       </div>
 
       {/* Filter and Table */}

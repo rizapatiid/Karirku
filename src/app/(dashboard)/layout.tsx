@@ -49,6 +49,10 @@ export default async function DashboardLayout({
             <Users size={20} />
             <span className="font-medium">Pelanggan</span>
           </Link>
+          <Link href="/suppliers" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+            <Users size={20} />
+            <span className="font-medium">Supplier</span>
+          </Link>
           <Link href="/finance" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
             <Settings size={20} />
             <span className="font-medium">Keuangan</span>
