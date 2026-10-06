@@ -1,13 +1,10 @@
-'use client'
-
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import prisma from '@/lib/prisma'
+import { updateTaxSettings } from '@/actions/settings'
 
-export default function TaxSettingsPage() {
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault()
-    alert('Konfigurasi pajak berhasil disimpan!')
-  }
+export default async function TaxSettingsPage() {
+  const store = await prisma.store.findFirst()
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -22,7 +19,9 @@ export default function TaxSettingsPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <form onSubmit={handleSave} className="space-y-6">
+        <form action={updateTaxSettings as any} className="space-y-6">
+          <input type="hidden" name="id" value={store?.id || ''} />
+          
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b pb-4">
               <div>
@@ -30,19 +29,19 @@ export default function TaxSettingsPage() {
                 <p className="text-xs text-gray-500">Aktifkan jika bisnis Anda PKP</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" defaultChecked className="sr-only peer" />
+                <input type="checkbox" name="taxActive" defaultChecked={store?.taxActive} className="sr-only peer" />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Persentase PPN (%)</label>
-              <input type="number" defaultValue="11" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+              <input type="number" step="0.1" name="taxRate" defaultValue={store?.taxRate || 11} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
 
             <div className="space-y-2 pt-4">
               <label className="text-sm font-medium text-gray-700">Service Charge (%) - Khusus F&B</label>
-              <input type="number" defaultValue="0" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+              <input type="number" step="0.1" name="serviceCharge" defaultValue={store?.serviceCharge || 0} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
           </div>
 

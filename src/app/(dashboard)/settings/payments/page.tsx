@@ -1,13 +1,10 @@
-'use client'
-
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import prisma from '@/lib/prisma'
+import { updatePaymentSettings } from '@/actions/settings'
 
-export default function PaymentSettingsPage() {
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault()
-    alert('Metode pembayaran berhasil diperbarui!')
-  }
+export default async function PaymentSettingsPage() {
+  const store = await prisma.store.findFirst()
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -16,46 +13,27 @@ export default function PaymentSettingsPage() {
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Metode Pembayaran</h2>
-          <p className="text-gray-500 text-sm mt-1">Kelola rekening dan e-Wallet yang diterima</p>
+          <h2 className="text-2xl font-bold text-gray-800">Pengaturan Pembayaran</h2>
+          <p className="text-gray-500 text-sm mt-1">Kelola metode pembayaran dan rekening toko</p>
         </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <form onSubmit={handleSave} className="space-y-6">
+        <form action={updatePaymentSettings as any} className="space-y-6">
+          <input type="hidden" name="id" value={store?.id || ''} />
           
           <div className="space-y-4">
-            <h3 className="font-bold text-gray-900 border-b pb-2">Transfer Bank</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Bank BCA</label>
-                <input placeholder="No Rekening..." className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Atas Nama (BCA)</label>
-                <input placeholder="Nama Pemilik..." className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Bank Mandiri</label>
-                <input placeholder="No Rekening..." className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Atas Nama (Mandiri)</label>
-                <input placeholder="Nama Pemilik..." className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4 pt-4">
-            <h3 className="font-bold text-gray-900 border-b pb-2">e-Wallet / QRIS</h3>
+            <h4 className="font-bold text-gray-900 border-b pb-2">Informasi Rekening & QRIS</h4>
+            <p className="text-xs text-gray-500 mb-2">Data ini dapat ditampilkan pada struk elektronik (opsional).</p>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Link QRIS (Opsional)</label>
-              <input placeholder="https://..." className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+              <label className="text-sm font-medium text-gray-700">Detail Rekening Bank (BCA, Mandiri, dll)</label>
+              <textarea 
+                name="paymentInfo"
+                defaultValue={store?.paymentInfo || ''}
+                placeholder="Contoh: BCA 1234567890 a.n KASIRKU MART"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none" 
+              ></textarea>
             </div>
           </div>
 
@@ -64,7 +42,7 @@ export default function PaymentSettingsPage() {
               Batal
             </Link>
             <button type="submit" className="px-6 py-2.5 bg-blue-600 rounded-lg text-white font-medium hover:bg-blue-700 transition">
-              Simpan Pembayaran
+              Simpan
             </button>
           </div>
         </form>

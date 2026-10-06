@@ -52,6 +52,18 @@ model Store {
   name      String
   address   String?
   phone     String?
+
+  // Extended Settings
+  taxActive        Boolean @default(false)
+  taxRate          Float   @default(11.0)
+  serviceCharge    Float   @default(0.0)
+  
+  receiptPaperSize String  @default("58mm")
+  receiptFooter    String?
+  receiptPromo     String?
+
+  paymentInfo      String? @db.Text
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -501,3 +513,4 @@ model Setting {
 
   @@map("settings")
 }
+

@@ -3,7 +3,7 @@ import PosClient from './PosClient'
 
 export default async function KasirPage() {
   // Fetch products and format them for the client
-  const [products, customers] = await Promise.all([
+  const [products, customers, store] = await Promise.all([
     prisma.product.findMany({
       where: { status: 'ACTIVE' },
       include: {
@@ -15,7 +15,8 @@ export default async function KasirPage() {
     prisma.customer.findMany({
       where: { status: 'ACTIVE' },
       orderBy: { name: 'asc' }
-    })
+    }),
+      prisma.store.findFirst()
   ])
 
   // Ensure strict formatting (avoiding Prisma decimal issues on client)
@@ -36,6 +37,8 @@ export default async function KasirPage() {
     phone: c.phone
   }))
 
-  return <PosClient initialProducts={plainProducts} initialCustomers={plainCustomers} />
+  return <PosClient initialProducts={plainProducts} initialCustomers={plainCustomers} storeConfig={{ taxActive: store?.taxActive || false, taxRate: store?.taxRate || 11, serviceCharge: store?.serviceCharge || 0 }} />
 }
+
+
 

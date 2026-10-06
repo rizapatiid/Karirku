@@ -19,7 +19,7 @@ type Customer = { id: string, name: string, phone: string | null }
 type CartItem = Product & { quantity: number }
 type HeldOrder = { id: string, time: Date, cart: CartItem[] }
 
-export default function PosClient({ initialProducts, initialCustomers }: { initialProducts: Product[], initialCustomers: Customer[] }) {
+export default function PosClient({ initialProducts, initialCustomers, storeConfig }: { initialProducts: Product[], initialCustomers: Customer[], storeConfig: { taxActive: boolean, taxRate: number, serviceCharge: number } }) {
   const [search, setSearch] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState<string>('')
   const [cart, setCart] = useState<CartItem[]>([])
@@ -91,10 +91,10 @@ export default function PosClient({ initialProducts, initialCustomers }: { initi
     }
   }
 
-  const [useTax, setUseTax] = useState(false)
+  const [useTax, setUseTax] = useState(storeConfig.taxActive)
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
   const discount = 0
-  const taxAmount = useTax ? (subtotal - discount) * 0.11 : 0
+  const taxAmount = useTax ? (subtotal - discount) * (storeConfig.taxRate / 100) + (subtotal - discount) * (storeConfig.serviceCharge / 100) : 0
   const total = subtotal - discount + taxAmount
 
   const formatRupiah = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num)
@@ -277,7 +277,7 @@ export default function PosClient({ initialProducts, initialCustomers }: { initi
           <div className="flex justify-between text-sm text-gray-600 items-center">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={useTax} onChange={(e) => setUseTax(e.target.checked)} className="rounded border-gray-300" />
-              <span>PPN (11%)</span>
+              <span>Pajak & Layanan ({storeConfig.taxRate + storeConfig.serviceCharge}%)</span>
             </label>
             <span>{formatRupiah(taxAmount)}</span>
           </div>
@@ -324,4 +324,7 @@ export default function PosClient({ initialProducts, initialCustomers }: { initi
     </div>
   )
 }
+
+
+
 
