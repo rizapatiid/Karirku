@@ -114,10 +114,10 @@ export default async function ProductsPage() {
                     <div className="flex items-center justify-end gap-2">
                       <button className="p-1.5 text-gray-400 hover:text-blue-600 transition" title="Edit">
                         <Edit size={16} />
-                      </a>
+                      </button>
                       <button className="p-1.5 text-gray-400 hover:text-red-600 transition" title="Hapus">
                         <Trash2 size={16} />
-                      </a>
+                      </button>
                     </div>
                   </td>
                 </tr>
