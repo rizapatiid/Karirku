@@ -64,9 +64,9 @@ export default async function SalesPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button className="p-1.5 text-gray-400 hover:text-blue-600 transition" title="Lihat Detail">
+                      <a href={`/sales/${sale.id}/receipt`} className="p-1.5 text-gray-400 hover:text-blue-600 transition" title="Lihat/Cetak Struk">
                         <Eye size={18} />
-                      </button>
+                      </a>
                       <a href={`/sales/${sale.id}/return`} className="p-1.5 text-gray-400 hover:text-red-600 transition" title="Retur Barang">
                         <ArrowRightLeft size={18} />
                       </a>
