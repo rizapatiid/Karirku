@@ -216,9 +216,42 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
               placeholder="Masukkan jumlah uang..."
               className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
             />
+            <div className="grid grid-cols-4 gap-1.5 mt-2">
+              <button 
+                onClick={() => setAmountPaid(total.toString())}
+                className="py-1.5 px-1 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 rounded text-xs font-bold transition"
+              >
+                Uang Pas
+              </button>
+              <button 
+                onClick={() => setAmountPaid('50000')}
+                className="py-1.5 px-1 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded text-xs font-semibold text-gray-700 transition"
+              >
+                50k
+              </button>
+              <button 
+                onClick={() => setAmountPaid('100000')}
+                className="py-1.5 px-1 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded text-xs font-semibold text-gray-700 transition"
+              >
+                100k
+              </button>
+              <button 
+                onClick={() => setAmountPaid('200000')}
+                className="py-1.5 px-1 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded text-xs font-semibold text-gray-700 transition"
+              >
+                200k
+              </button>
+            </div>
           </div>
 
-          {error && <div className="text-xs text-red-600 bg-red-50 p-2 rounded">{error}</div>}
+          {Number(amountPaid) > total && (
+            <div className="flex justify-between items-center bg-blue-50 text-blue-800 p-2 rounded text-sm font-bold mt-2 border border-blue-100">
+              <span>Kembalian:</span>
+              <span>{formatRupiah(Number(amountPaid) - total)}</span>
+            </div>
+          )}
+
+          {error && <div className="text-xs text-red-600 bg-red-50 p-2 rounded mt-2">{error}</div>}
 
           <button 
             disabled={cart.length === 0 || isProcessing || !amountPaid}
@@ -232,4 +265,6 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
     </div>
   )
 }
+
+
 

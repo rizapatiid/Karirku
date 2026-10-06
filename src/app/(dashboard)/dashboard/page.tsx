@@ -1,111 +1,170 @@
 import prisma from '@/lib/prisma'
-import { Activity } from 'lucide-react'
+import { DollarSign, ShoppingBag, AlertTriangle, TrendingUp, Package } from 'lucide-react'
+import Link from 'next/link'
+import DashboardChart from './components/DashboardChart'
 
 export default async function DashboardPage() {
   const today = new Date()
-  const startOfDay = new Date(today.setHours(0, 0, 0, 0))
-  const endOfDay = new Date(today.setHours(23, 59, 59, 999))
+  today.setHours(0, 0, 0, 0)
 
-  // 1. Penjualan Hari Ini
+  // 1. Get Today's Sales
   const todaySales = await prisma.sale.aggregate({
+    where: { transactionDate: { gte: today }, status: 'COMPLETED' },
     _sum: { total: true },
-    where: {
-      transactionDate: { gte: startOfDay, lte: endOfDay },
-      status: 'COMPLETED'
-    }
+    _count: { id: true }
   })
 
-  // 2. Transaksi Hari Ini
-  const todayTransactionCount = await prisma.sale.count({
-    where: {
-      transactionDate: { gte: startOfDay, lte: endOfDay },
-      status: 'COMPLETED'
-    }
-  })
+  const todaysRevenue = Number(todaySales._sum.total || 0)
+  const todaysCount = todaySales._count.id
 
-  // 3. Stok Menipis
-  const lowStockProducts = await prisma.product.count({
-    where: {
-      stock: { lte: prisma.product.fields.minimumStock },
-      status: 'ACTIVE'
-    }
-  })
-
-  // 4. Laba Hari Ini (Total Penjualan - Total Modal (HPP))
-  const todaySaleItems = await prisma.saleItem.findMany({
-    where: {
-      sale: {
-        transactionDate: { gte: startOfDay, lte: endOfDay },
-        status: 'COMPLETED'
-      }
-    }
+  // 2. Get Low Stock Items
+  const lowStockProducts = await prisma.product.findMany({
+    where: { stock: { lte: 10 }, status: 'ACTIVE' },
+    take: 5,
+    orderBy: { stock: 'asc' }
   })
   
-  const hppToday = todaySaleItems.reduce((acc, item) => acc + (Number(item.costPrice) * item.quantity), 0)
-  const revenueToday = todaySales._sum.total ? Number(todaySales._sum.total) : 0
-  const profitToday = revenueToday - hppToday
-
-  // Fetch recent activities
-  const recentSales = await prisma.sale.findMany({
-    orderBy: { transactionDate: 'desc' },
-    take: 5,
-    include: { user: true }
+  const totalLowStock = await prisma.product.count({
+    where: { stock: { lte: 10 }, status: 'ACTIVE' }
   })
+
+  // 3. Calculate Gross Profit (This month)
+  const startOfMonth = new Date()
+  startOfMonth.setDate(1)
+  startOfMonth.setHours(0, 0, 0, 0)
+
+  const monthSales = await prisma.sale.findMany({
+    where: { transactionDate: { gte: startOfMonth }, status: 'COMPLETED' },
+    include: { items: true }
+  })
+
+  let monthRevenue = 0
+  let monthHPP = 0
+
+  monthSales.forEach(sale => {
+    monthRevenue += Number(sale.total)
+    sale.items.forEach(item => {
+      monthHPP += (Number(item.costPrice) * item.quantity)
+    })
+  })
+
+  const grossProfit = monthRevenue - monthHPP
+
+  // 4. Get last 7 days data for chart
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
+  sevenDaysAgo.setHours(0, 0, 0, 0)
+
+  const recentSales = await prisma.sale.findMany({
+    where: { transactionDate: { gte: sevenDaysAgo }, status: 'COMPLETED' },
+    select: { transactionDate: true, total: true }
+  })
+
+  // Group by date
+  const chartDataMap: Record<string, number> = {}
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sevenDaysAgo)
+    d.setDate(d.getDate() + i)
+    const label = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+    chartDataMap[label] = 0
+  }
+
+  recentSales.forEach(sale => {
+    const label = sale.transactionDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+    if (chartDataMap[label] !== undefined) {
+      chartDataMap[label] += Number(sale.total)
+    }
+  })
+
+  const chartData = Object.keys(chartDataMap).map(key => ({
+    date: key,
+    revenue: chartDataMap[key]
+  }))
 
   const formatRupiah = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num)
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Ringkasan Bisnis</h2>
+          <p className="text-gray-500 text-sm mt-1">Pantau performa penjualan dan inventaris Anda hari ini</p>
+        </div>
+        <Link href="/pos" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-md transition">
+          Buka Kasir (POS)
+        </Link>
+      </div>
+
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Metric Cards */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-500">Penjualan Hari Ini</h3>
-          <p className="text-2xl font-bold text-gray-900 mt-2">{formatRupiah(revenueToday)}</p>
-          <span className="text-xs text-green-600 font-medium">Berdasarkan data {today.toLocaleDateString()}</span>
-        </div>
-        
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-500">Transaksi Hari Ini</h3>
-          <p className="text-2xl font-bold text-gray-900 mt-2">{todayTransactionCount}</p>
-          <span className="text-xs text-gray-500 font-medium">Transaksi berhasil</span>
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex items-start gap-4">
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg"><DollarSign size={24} /></div>
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">Pendapatan Hari Ini</p>
+            <h3 className="text-2xl font-bold text-gray-900">{formatRupiah(todaysRevenue)}</h3>
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-500">Stok Menipis</h3>
-          <p className="text-2xl font-bold text-red-600 mt-2">{lowStockProducts}</p>
-          <span className="text-xs text-gray-500 font-medium">Produk perlu di-restock</span>
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex items-start gap-4">
+          <div className="p-3 bg-purple-50 text-purple-600 rounded-lg"><ShoppingBag size={24} /></div>
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">Transaksi Hari Ini</p>
+            <h3 className="text-2xl font-bold text-gray-900">{todaysCount} <span className="text-sm font-normal text-gray-500">struk</span></h3>
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-500">Laba Hari Ini (Gross)</h3>
-          <p className="text-2xl font-bold text-gray-900 mt-2">{formatRupiah(profitToday)}</p>
-          <span className="text-xs text-green-600 font-medium">Penjualan - HPP</span>
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex items-start gap-4">
+          <div className="p-3 bg-green-50 text-green-600 rounded-lg"><TrendingUp size={24} /></div>
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">Laba Kotor (Bulan Ini)</p>
+            <h3 className="text-2xl font-bold text-gray-900">{formatRupiah(grossProfit)}</h3>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex items-start gap-4">
+          <div className="p-3 bg-orange-50 text-orange-600 rounded-lg"><AlertTriangle size={24} /></div>
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">Stok Menipis</p>
+            <h3 className="text-2xl font-bold text-gray-900">{totalLowStock} <span className="text-sm font-normal text-gray-500">barang</span></h3>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Grafik Penjualan</h3>
-          <div className="h-64 flex flex-col items-center justify-center bg-gray-50 rounded-lg border border-dashed border-gray-300">
-            <Activity className="w-12 h-12 text-gray-300 mb-2" />
-            <span className="text-gray-400">Modul Chart akan diimplementasikan via Recharts</span>
-          </div>
+        {/* Chart Section */}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <TrendingUp size={18} className="text-blue-500" /> Grafik Penjualan (7 Hari Terakhir)
+          </h3>
+          <DashboardChart data={chartData} />
         </div>
-        
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Aktivitas Terakhir</h3>
-          <div className="space-y-4">
-            {recentSales.map(sale => (
-              <div key={sale.id} className="flex justify-between items-start border-b border-gray-100 pb-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-800">{sale.invoiceNumber}</p>
-                  <p className="text-xs text-gray-500">Kasir: {sale.user.name}</p>
+
+        {/* Low Stock Widget */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+              <Package size={18} className="text-orange-500" /> Peringatan Stok
+            </h3>
+            <Link href="/products" className="text-sm text-blue-600 hover:underline">Lihat Semua</Link>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+            {lowStockProducts.length === 0 ? (
+              <div className="text-center text-gray-500 text-sm py-10">Stok semua barang aman.</div>
+            ) : (
+              lowStockProducts.map(p => (
+                <div key={p.id} className="flex justify-between items-center p-3 bg-red-50/50 border border-red-100 rounded-lg">
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">{p.name}</p>
+                    <p className="text-xs text-gray-500">SKU: {p.sku}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="inline-flex items-center justify-center px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded">
+                      Sisa {p.stock}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-sm font-bold text-gray-900">{formatRupiah(Number(sale.total))}</span>
-              </div>
-            ))}
-            {recentSales.length === 0 && (
-              <div className="text-sm text-gray-500 text-center py-4">Belum ada transaksi</div>
+              ))
             )}
           </div>
         </div>
