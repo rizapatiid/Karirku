@@ -23,30 +23,33 @@ export async function middleware(request: NextRequest) {
     const parsed = await jwtVerify(session, key)
     const role = parsed.payload.role as string || 'CASHIER'
     
-    // Valid session but trying to access login page, redirect to correct default page
+    // Valid session but trying to access login page or root, redirect to correct default page
     if (isLoginPage || path === '/') {
-      const dest = role === 'CASHIER' ? '/pos' : '/dashboard'
+      const dest = role === 'OWNER' ? '/owner' : (role === 'ADMIN' ? '/admin' : '/kasir')
       return NextResponse.redirect(new URL(dest, request.url))
     }
     
     // ROLE-BASED ACCESS CONTROL (RBAC)
     
     // Admin & Cashier cannot access Owner-only routes
-    const ownerOnlyRoutes = ['/finance', '/reports', '/audit-logs', '/users', '/settings']
+    const ownerOnlyRoutes = ['/owner', '/finance', '/reports', '/audit-logs', '/users', '/settings']
     if (ownerOnlyRoutes.some(r => path.startsWith(r))) {
-      if (role !== 'OWNER') return NextResponse.redirect(new URL('/dashboard', request.url))
+      if (role !== 'OWNER') {
+        const dest = role === 'ADMIN' ? '/admin' : '/kasir'
+        return NextResponse.redirect(new URL(dest, request.url))
+      }
     }
 
-    // Cashier cannot access Admin routes OR Dashboard
-    const adminRoutes = ['/products', '/stock', '/purchases', '/suppliers', '/dashboard']
+    // Cashier cannot access Admin routes
+    const adminRoutes = ['/admin', '/products', '/stock', '/purchases', '/suppliers']
     if (adminRoutes.some(r => path.startsWith(r))) {
-      if (role === 'CASHIER') return NextResponse.redirect(new URL('/pos', request.url)) // Send back to POS
+      if (role === 'CASHIER') return NextResponse.redirect(new URL('/kasir', request.url)) 
     }
 
     // Admin cannot access Cashier/POS routes
-    const cashierRoutes = ['/pos', '/customers']
+    const cashierRoutes = ['/kasir', '/customers']
     if (cashierRoutes.some(r => path.startsWith(r))) {
-      if (role === 'ADMIN') return NextResponse.redirect(new URL('/dashboard', request.url))
+      if (role === 'ADMIN') return NextResponse.redirect(new URL('/admin', request.url))
     }
 
     return NextResponse.next()

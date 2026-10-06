@@ -178,7 +178,9 @@ export async function processCheckout(data: CheckoutData) {
     })
 
     revalidatePath('/products')
-    revalidatePath('/dashboard')
+    revalidatePath('/owner')
+    revalidatePath('/admin')
+    revalidatePath('/kasir')
     
     return { success: true, invoiceNumber: result.invoiceNumber, saleId: result.id }
 
@@ -187,4 +189,5 @@ export async function processCheckout(data: CheckoutData) {
     return { success: false, error: error.message }
   }
 }
+
 

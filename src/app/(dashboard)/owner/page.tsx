@@ -4,7 +4,7 @@ import Link from 'next/link'
 import DashboardChart from './components/DashboardChart'
 import TopProductsChart from './components/TopProductsChart'
 
-export default async function OwnerDashboard() {
+export default async function OwnerDashboardPage() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -110,7 +110,7 @@ export default async function OwnerDashboard() {
           <h2 className="text-2xl font-bold text-gray-800">Ringkasan Bisnis</h2>
           <p className="text-gray-500 text-sm mt-1">Pantau performa penjualan dan inventaris Anda hari ini</p>
         </div>
-        <Link href="/pos" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-md transition">
+        <Link href="/kasir" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-md transition">
           Buka Kasir (POS)
         </Link>
       </div>
@@ -206,4 +206,5 @@ export default async function OwnerDashboard() {
     </div>
   )
 }
+
 

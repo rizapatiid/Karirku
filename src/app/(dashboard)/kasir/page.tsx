@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import PosClient from './PosClient'
 
-export default async function PosPage() {
+export default async function KasirPage() {
   // Fetch products and format them for the client
   const [products, customers] = await Promise.all([
     prisma.product.findMany({
@@ -38,3 +38,4 @@ export default async function PosPage() {
 
   return <PosClient initialProducts={plainProducts} initialCustomers={plainCustomers} />
 }
+

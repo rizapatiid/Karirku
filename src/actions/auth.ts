@@ -13,7 +13,7 @@ export async function login(formData: FormData) {
   const username = formData.get('username') as string
   const password = formData.get('password') as string
 
-  let dest = '/dashboard'
+  let dest = '/kasir'
 
   try {
     const user = await prisma.user.findUnique({
@@ -51,7 +51,7 @@ export async function login(formData: FormData) {
       }
     })
 
-    dest = user.role.name === 'CASHIER' ? '/pos' : '/dashboard'
+    dest = user.role.name === 'OWNER' ? '/owner' : (user.role.name === 'ADMIN' ? '/admin' : '/kasir')
 
   } catch (error) {
     console.error(error)
@@ -98,3 +98,5 @@ export async function getSession() {
     return null
   }
 }
+
+

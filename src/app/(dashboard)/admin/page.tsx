@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma'
 import { AlertTriangle, Package, Users, ArrowRightLeft } from 'lucide-react'
 import Link from 'next/link'
 
-export default async function AdminDashboard() {
+export default async function AdminDashboardPage() {
   // 1. Get Low Stock Items
   const lowStockProducts = await prisma.product.findMany({
     where: { stock: { lte: 10 }, status: 'ACTIVE' },
@@ -107,3 +107,4 @@ export default async function AdminDashboard() {
     </div>
   )
 }
+
