@@ -15,6 +15,7 @@ interface CheckoutData {
   paymentMethod: string
   amountPaid: number
   discount: number
+  tax?: number
 }
 
 import { getSession } from './auth'
@@ -69,7 +70,7 @@ export async function processCheckout(data: CheckoutData) {
       })
     }
 
-    const total = subtotal - data.discount
+    const total = subtotal - data.discount + (data.tax || 0)
     if (data.amountPaid < total && data.paymentMethod === 'CASH') {
       throw new Error('Pembayaran kurang dari total')
     }
@@ -100,6 +101,7 @@ export async function processCheckout(data: CheckoutData) {
           transactionDate: new Date(),
           subtotal,
           discount: data.discount,
+        tax: data.tax || 0,
           tax: 0,
           total,
           paidAmount: data.amountPaid,

@@ -41,6 +41,11 @@ export default async function ProductsPage() {
             <Plus size={18} />
             <span>Tambah Produk</span>
           </Link>
+          <a href="#" className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg font-medium transition" title="Fitur Print Barcode segera hadir">
+            <Plus size={18} />
+            <span>Cetak Barcode</span>
+          </a>
+          </Link>
         </div>
       </div>
 
@@ -110,10 +115,10 @@ export default async function ProductsPage() {
                     <div className="flex items-center justify-end gap-2">
                       <button className="p-1.5 text-gray-400 hover:text-blue-600 transition" title="Edit">
                         <Edit size={16} />
-                      </button>
+                      </a>
                       <button className="p-1.5 text-gray-400 hover:text-red-600 transition" title="Hapus">
                         <Trash2 size={16} />
-                      </button>
+                      </a>
                     </div>
                   </td>
                 </tr>
@@ -134,8 +139,8 @@ export default async function ProductsPage() {
         <div className="p-4 border-t border-gray-200 flex items-center justify-between text-sm text-gray-600">
           <div>Menampilkan 1 hingga {products.length} dari {products.length} produk</div>
           <div className="flex gap-1">
-            <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50" disabled>Sebel.</button>
-            <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50" disabled>Selanj.</button>
+            <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50" disabled>Sebel.</a>
+            <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50" disabled>Selanj.</a>
           </div>
         </div>
 

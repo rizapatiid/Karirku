@@ -15,10 +15,12 @@ type Product = {
 }
 
 type CartItem = Product & { quantity: number }
+type HeldOrder = { id: string, time: Date, cart: CartItem[] }
 
 export default function PosClient({ initialProducts }: { initialProducts: Product[] }) {
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<CartItem[]>([])
+  const [heldOrders, setHeldOrders] = useState<HeldOrder[]>([])
   const [amountPaid, setAmountPaid] = useState<string>('')
   
   const [isProcessing, setIsProcessing] = useState(false)
@@ -58,9 +60,26 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
 
   const removeFromCart = (id: string) => setCart(prev => prev.filter(item => item.id !== id))
 
+  const handleHoldOrder = () => {
+    if (cart.length === 0) return
+    setHeldOrders(prev => [...prev, { id: `Draft-${Date.now().toString().slice(-4)}`, time: new Date(), cart: [...cart] }])
+    setCart([])
+    setAmountPaid('')
+  }
+
+  const handleLoadOrder = (orderId: string) => {
+    const order = heldOrders.find(o => o.id === orderId)
+    if (order) {
+      setCart(order.cart)
+      setHeldOrders(prev => prev.filter(o => o.id !== orderId))
+    }
+  }
+
+  const [useTax, setUseTax] = useState(false)
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
   const discount = 0
-  const total = subtotal - discount
+  const taxAmount = useTax ? (subtotal - discount) * 0.11 : 0
+  const total = subtotal - discount + taxAmount
 
   const formatRupiah = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num)
 
@@ -78,7 +97,7 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
       items: cart.map(item => ({ productId: item.id, quantity: item.quantity, price: item.price })),
       paymentMethod: 'CASH',
       amountPaid: paid,
-      discount: discount
+      discount: discount, tax: taxAmount
     })
 
     if (result.success) {
@@ -157,14 +176,34 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
 
       {/* Kanan: Keranjang */}
       <div className="w-full lg:w-[400px] flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
           <h2 className="font-bold text-gray-800 flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" />
-            Pesanan Saat Ini
+            Pesanan
           </h2>
-          <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
-            {cart.length} Item
-          </span>
+          <div className="flex gap-2">
+            {heldOrders.length > 0 && (
+              <select 
+                onChange={(e) => handleLoadOrder(e.target.value)}
+                className="text-xs border border-gray-300 rounded px-2 py-1 outline-none bg-white text-gray-700"
+                value=""
+              >
+                <option value="" disabled>Panggil ({heldOrders.length})</option>
+                {heldOrders.map(o => <option key={o.id} value={o.id}>{o.id}</option>)}
+              </select>
+            )}
+            <button 
+              onClick={handleHoldOrder}
+              disabled={cart.length === 0}
+              className="text-xs bg-orange-100 text-orange-700 font-bold px-2 py-1 rounded disabled:opacity-50 hover:bg-orange-200 transition"
+              title="Simpan Antrean (Hold)"
+            >
+              Hold
+            </button>
+            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
+              {cart.length}
+            </span>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -193,7 +232,7 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
           )}
         </div>
 
-        <div className="bg-gray-50 p-4 border-t border-gray-200 space-y-3">
+                <div className="bg-gray-50 p-4 border-t border-gray-200 space-y-3">
           <div className="flex justify-between text-sm text-gray-600">
             <span>Subtotal</span>
             <span>{formatRupiah(subtotal)}</span>
@@ -201,6 +240,13 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
           <div className="flex justify-between text-sm text-gray-600">
             <span>Diskon</span>
             <span>{formatRupiah(discount)}</span>
+          </div>
+          <div className="flex justify-between text-sm text-gray-600 items-center">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={useTax} onChange={(e) => setUseTax(e.target.checked)} className="rounded text-blue-600" />
+              <span>PPN (11%)</span>
+            </label>
+            <span>{formatRupiah(taxAmount)}</span>
           </div>
           <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-200 pt-3">
             <span>Total</span>
@@ -265,6 +311,8 @@ export default function PosClient({ initialProducts }: { initialProducts: Produc
     </div>
   )
 }
+
+
 
 
 
