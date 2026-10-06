@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma'
 import { Search, ArrowRightLeft } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function StockMovementsPage() {
   const movements = await prisma.stockMovement.findMany({
@@ -10,9 +11,15 @@ export default async function StockMovementsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-800">Pergerakan Stok</h2>
-        <p className="text-gray-500 text-sm mt-1">Lacak histori masuk dan keluarnya barang</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Pergerakan Stok</h2>
+          <p className="text-gray-500 text-sm mt-1">Lacak histori masuk dan keluarnya barang</p>
+        </div>
+        <Link href="/stock/adjustment" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition">
+          <ArrowRightLeft size={18} />
+          <span>Penyesuaian Stok</span>
+        </Link>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

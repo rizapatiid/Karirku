@@ -4,9 +4,10 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
-export default async function ReturnPage({ params }: { params: { id: string } }) {
+export default async function ReturnPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
   const sale = await prisma.sale.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       items: {
         include: { product: true }
