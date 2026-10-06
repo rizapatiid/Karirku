@@ -51,6 +51,10 @@ export default function DashboardLayout({
             <Settings size={20} />
             <span className="font-medium">Laporan</span>
           </Link>
+          <Link href="/audit-logs" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+            <Settings size={20} />
+            <span className="font-medium">Audit Log</span>
+          </Link>
           <Link href="/settings" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
             <Settings size={20} />
             <span className="font-medium">Pengaturan</span>
