@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings, FileText, ArrowRightLeft } from 'lucide-react'
+import { LayoutDashboard, ShoppingCart, Package, Users, Settings, FileText, ArrowRightLeft, ShieldCheck, Wallet, DollarSign } from 'lucide-react'
 import { getSession } from '@/actions/auth'
 import LogoutButton from './LogoutButton'
 import { redirect } from 'next/navigation'
@@ -12,6 +12,24 @@ export default async function DashboardLayout({
   const session = await getSession()
   if (!session) redirect('/login')
 
+  const role = session.role || 'CASHIER' // Default safe role
+
+  const menuItems = [
+    { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['OWNER', 'ADMIN', 'CASHIER'] },
+    { href: '/pos', icon: ShoppingCart, label: 'POS / Kasir', roles: ['OWNER', 'CASHIER'] },
+    { href: '/sales', icon: FileText, label: 'Riwayat Penjualan', roles: ['OWNER', 'ADMIN', 'CASHIER'] },
+    { href: '/products', icon: Package, label: 'Produk', roles: ['OWNER', 'ADMIN'] },
+    { href: '/stock', icon: ArrowRightLeft, label: 'Pergerakan Stok', roles: ['OWNER', 'ADMIN'] },
+    { href: '/purchases', icon: Package, label: 'Pembelian', roles: ['OWNER', 'ADMIN'] },
+    { href: '/customers', icon: Users, label: 'Pelanggan', roles: ['OWNER', 'CASHIER'] },
+    { href: '/suppliers', icon: Users, label: 'Supplier', roles: ['OWNER', 'ADMIN'] },
+    { href: '/finance', icon: Wallet, label: 'Keuangan', roles: ['OWNER'] },
+    { href: '/reports', icon: FileText, label: 'Laporan', roles: ['OWNER'] },
+    { href: '/audit-logs', icon: ShieldCheck, label: 'Audit Log', roles: ['OWNER'] },
+    { href: '/users', icon: Users, label: 'Pengguna (Karyawan)', roles: ['OWNER'] },
+    { href: '/settings', icon: Settings, label: 'Pengaturan', roles: ['OWNER'] },
+  ]
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -21,58 +39,12 @@ export default async function DashboardLayout({
         </div>
         
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <LayoutDashboard size={20} />
-            <span className="font-medium">Dashboard</span>
-          </Link>
-          <Link href="/pos" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <ShoppingCart size={20} />
-            <span className="font-medium">POS / Kasir</span>
-          </Link>
-          <Link href="/sales" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <ShoppingCart size={20} />
-            <span className="font-medium">Riwayat Penjualan</span>
-          </Link>
-          <Link href="/products" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <Package size={20} />
-            <span className="font-medium">Produk</span>
-          </Link>
-          <Link href="/stock" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <ArrowRightLeft size={20} />
-            <span className="font-medium">Pergerakan Stok</span>
-          </Link>
-          <Link href="/purchases" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <Package size={20} />
-            <span className="font-medium">Pembelian</span>
-          </Link>
-          <Link href="/customers" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <Users size={20} />
-            <span className="font-medium">Pelanggan</span>
-          </Link>
-          <Link href="/suppliers" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <Users size={20} />
-            <span className="font-medium">Supplier</span>
-          </Link>
-          <Link href="/finance" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <Settings size={20} />
-            <span className="font-medium">Keuangan</span>
-          </Link>
-          <Link href="/reports" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <FileText size={20} />
-            <span className="font-medium">Laporan</span>
-          </Link>
-          <Link href="/audit-logs" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <Settings size={20} />
-            <span className="font-medium">Audit Log</span>
-          </Link>
-          <Link href="/users" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <Users size={20} />
-            <span className="font-medium">Manajemen Pengguna</span>
-          </Link>
-          <Link href="/settings" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <Settings size={20} />
-            <span className="font-medium">Pengaturan</span>
-          </Link>
+          {menuItems.filter(item => item.roles.includes(role)).map(item => (
+            <Link key={item.href} href={item.href} className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition">
+              <item.icon size={20} />
+              <span className="font-medium">{item.label}</span>
+            </Link>
+          ))}
         </nav>
 
         <div className="p-4 border-t border-gray-200">
