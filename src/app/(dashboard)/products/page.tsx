@@ -138,8 +138,8 @@ export default async function ProductsPage() {
         <div className="p-4 border-t border-gray-200 flex items-center justify-between text-sm text-gray-600">
           <div>Menampilkan 1 hingga {products.length} dari {products.length} produk</div>
           <div className="flex gap-1">
-            <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50" disabled>Sebel.</a>
-            <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50" disabled>Selanj.</a>
+            <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50" disabled>Sebel.</button>
+            <button className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50" disabled>Selanj.</button>
           </div>
         </div>
 
