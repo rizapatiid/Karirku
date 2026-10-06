@@ -25,7 +25,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
     <div className="min-h-screen bg-gray-100 flex justify-center py-10 print:bg-white print:py-0">
       <div className="bg-white p-6 w-full max-w-sm shadow-lg print:shadow-none print:w-full print:max-w-full">
         {/* Header Struk */}
-        <div className="text-center mb-6 border-b border-dashed border-gray-300 pb-4 flex flex-col items-center">
+        <div className="text-center mb-4 border-b border-dashed border-gray-300 pb-4 flex flex-col items-center">
           {store?.logoUrl && (
             <img src={store.logoUrl} alt="Logo" className="max-w-[80px] max-h-[80px] object-contain mb-3 grayscale print:grayscale" />
           )}
@@ -33,6 +33,16 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
           <p className="text-xs text-gray-500 mt-1">{store?.address || 'Alamat Toko Belum Diatur'}</p>
           <p className="text-xs text-gray-500">Telp: {store?.phone || '-'}</p>
         </div>
+
+        {/* Nomor Antrean (Large & Prominent) */}
+        {sale.queueNumber && (
+          <div className="text-center border-b border-dashed border-gray-300 pb-3 mb-4">
+            <p className="text-[10px] font-bold tracking-widest text-gray-500 uppercase">NOMOR ANTREAN</p>
+            <p className="text-4xl font-black text-black tracking-tight mt-0.5">
+              {String(sale.queueNumber).padStart(3, '0')}
+            </p>
+          </div>
+        )}
 
         {/* Info Transaksi */}
         <div className="text-xs text-gray-700 mb-4 space-y-1">

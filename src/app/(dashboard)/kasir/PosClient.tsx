@@ -27,7 +27,7 @@ export default function PosClient({ initialProducts, initialCustomers, storeConf
   const [amountPaid, setAmountPaid] = useState<string>('')
   
   const [isProcessing, setIsProcessing] = useState(false)
-  const [checkoutSuccess, setCheckoutSuccess] = useState<{invoice: string, id: string} | null>(null)
+  const [checkoutSuccess, setCheckoutSuccess] = useState<{invoice: string, id: string, queueNumber?: number | null} | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -118,7 +118,7 @@ export default function PosClient({ initialProducts, initialCustomers, storeConf
     })
 
     if (result.success) {
-      setCheckoutSuccess({ invoice: result.invoiceNumber!, id: result.saleId! })
+      setCheckoutSuccess({ invoice: result.invoiceNumber!, id: result.saleId!, queueNumber: result.queueNumber })
       setCart([])
       setAmountPaid('')
     } else {
@@ -132,15 +132,26 @@ export default function PosClient({ initialProducts, initialCustomers, storeConf
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-full bg-white rounded-xl shadow-sm border border-gray-200 p-8">
         <CheckCircle2 className="w-20 h-20 text-green-500 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Transaksi Berhasil!</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-1">Transaksi Berhasil!</h2>
+        
+        {checkoutSuccess.queueNumber && (
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl px-8 py-4 my-4 text-center shadow-sm">
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block">Nomor Antrean</span>
+            <span className="text-5xl font-black text-blue-700 tracking-tight">
+              {String(checkoutSuccess.queueNumber).padStart(3, '0')}
+            </span>
+          </div>
+        )}
+
         <p className="text-gray-500 mb-6">No. Invoice: <span className="font-mono font-medium text-gray-700">{checkoutSuccess.invoice}</span></p>
         
         <div className="flex gap-4">
-          <a href={`/sales/${checkoutSuccess.id}/receipt`} target="_blank" className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition">
-            Cetak Struk</a>
+          <a href={`/sales/${checkoutSuccess.id}/receipt`} target="_blank" className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition">
+            Cetak Struk
+          </a>
           <button 
             onClick={() => setCheckoutSuccess(null)}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
           >
             Transaksi Baru
           </button>

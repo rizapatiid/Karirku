@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { getSession } from './auth'
 
 interface CartItem {
   productId: string
@@ -17,8 +18,6 @@ interface CheckoutData {
   discount: number
   tax?: number
 }
-
-import { getSession } from './auth'
 
 export async function processCheckout(data: CheckoutData) {
   try {
@@ -92,17 +91,34 @@ export async function processCheckout(data: CheckoutData) {
 
     // TRANSACTION BLOCK (ACID)
     const result = await prisma.$transaction(async (tx) => {
+      // Calculate today's Queue Number
+      const startOfDay = new Date()
+      startOfDay.setHours(0, 0, 0, 0)
+      const endOfDay = new Date()
+      endOfDay.setHours(23, 59, 59, 999)
+
+      const lastQueueToday = await tx.queue.findFirst({
+        where: {
+          createdAt: { gte: startOfDay, lte: endOfDay }
+        },
+        orderBy: { number: 'desc' }
+      })
+      const queueNumber = (lastQueueToday?.number || 0) + 1
+
+      // Get store if available
+      const store = await tx.store.findFirst()
+
       // 1. Create Sale
       const sale = await tx.sale.create({
         data: {
           invoiceNumber,
+          queueNumber,
           userId: user.id,
           customerId: customerId,
           transactionDate: new Date(),
           subtotal,
           discount: data.discount,
-        tax: data.tax || 0,
-          
+          tax: data.tax || 0,
           total,
           paidAmount: data.amountPaid,
           changeAmount,
@@ -111,6 +127,16 @@ export async function processCheckout(data: CheckoutData) {
           items: {
             create: orderItemsToCreate
           }
+        }
+      })
+
+      // 1.1 Automatically create Queue entry for live queue tracking board
+      await tx.queue.create({
+        data: {
+          storeId: store?.id,
+          number: queueNumber,
+          label: invoiceNumber,
+          status: 'WAITING'
         }
       })
 
@@ -170,7 +196,7 @@ export async function processCheckout(data: CheckoutData) {
           action: 'CREATE',
           module: 'POS',
           referenceId: sale.id,
-          description: `Kasir membuat transaksi ${invoiceNumber}`
+          description: `Kasir membuat transaksi ${invoiceNumber} (Antrian #${queueNumber})`
         }
       })
 
@@ -181,13 +207,17 @@ export async function processCheckout(data: CheckoutData) {
     revalidatePath('/owner')
     revalidatePath('/admin')
     revalidatePath('/kasir')
+    revalidatePath('/queue')
     
-    return { success: true, invoiceNumber: result.invoiceNumber, saleId: result.id }
+    return { 
+      success: true, 
+      invoiceNumber: result.invoiceNumber, 
+      saleId: result.id,
+      queueNumber: result.queueNumber 
+    }
 
   } catch (error: any) {
     console.error("Checkout Error:", error)
     return { success: false, error: error.message }
   }
 }
-
-
