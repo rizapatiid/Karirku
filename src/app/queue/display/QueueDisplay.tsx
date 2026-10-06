@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 
 type QueueStatus = 'WAITING' | 'CALLED' | 'SERVING' | 'DONE' | 'SKIPPED'
 
@@ -17,12 +17,67 @@ interface Props {
   logoUrl: string | null
 }
 
+// Play pleasant chime bell using Web Audio API (no external file needed)
+const playChime = () => {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioCtx) return
+    const ctx = new AudioCtx()
+
+    const playTone = (freq: number, start: number, duration: number) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + start)
+      
+      gain.gain.setValueAtTime(0, ctx.currentTime + start)
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + start + 0.05)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration)
+      
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      
+      osc.start(ctx.currentTime + start)
+      osc.stop(ctx.currentTime + start + duration)
+    }
+
+    // Two-tone ding-dong chime (523Hz = C5, 659Hz = E5)
+    playTone(523.25, 0.0, 0.6)
+    playTone(659.25, 0.25, 0.8)
+  } catch (e) {
+    console.error('Audio chime error:', e)
+  }
+}
+
+// Indonesian Text-to-Speech Voice Call
+const speakIndonesianQueue = (num: number) => {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+
+  window.speechSynthesis.cancel()
+
+  // Format: "Nomor antrean 0 0 1, silakan menuju kasir."
+  const paddedNum = num.toString().padStart(3, '0').split('').join(' ')
+  const text = `Nomor antrean ${paddedNum}, silakan menuju kasir.`
+
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = 'id-ID'
+  utterance.rate = 0.88 // clear tempo
+  utterance.pitch = 1.05
+
+  // Find Indonesian voice if present
+  const voices = window.speechSynthesis.getVoices()
+  const idVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ID'))
+  if (idVoice) utterance.voice = idVoice
+
+  window.speechSynthesis.speak(utterance)
+}
+
 export default function QueueDisplay({ storeName, logoUrl }: Props) {
   const [queues, setQueues] = useState<QueueItem[]>([])
   const [time, setTime] = useState(new Date())
   const [prevCalled, setPrevCalled] = useState<number | null>(null)
   const [flash, setFlash] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [soundEnabled, setSoundEnabled] = useState(true)
 
   const called = queues.find(q => q.status === 'CALLED')
   const waiting = queues.filter(q => q.status === 'WAITING')
@@ -34,6 +89,25 @@ export default function QueueDisplay({ storeName, logoUrl }: Props) {
     return () => clearInterval(t)
   }, [])
 
+  // Load voices on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices()
+      }
+    }
+  }, [])
+
+  // Announcement trigger function
+  const announceQueue = useCallback((num: number) => {
+    if (!soundEnabled) return
+    playChime()
+    // Delay voice slightly after chime
+    setTimeout(() => {
+      speakIndonesianQueue(num)
+    }, 700)
+  }, [soundEnabled])
+
   // Poll queue every 3 seconds
   useEffect(() => {
     const fetch_ = () => {
@@ -44,12 +118,8 @@ export default function QueueDisplay({ storeName, logoUrl }: Props) {
           if (newCalled && newCalled.number !== prevCalled) {
             setPrevCalled(newCalled.number)
             setFlash(true)
-            // Play beep
-            if (audioRef.current) {
-              audioRef.current.currentTime = 0
-              audioRef.current.play().catch(() => {})
-            }
-            setTimeout(() => setFlash(false), 3000)
+            announceQueue(newCalled.number)
+            setTimeout(() => setFlash(false), 4000)
           }
           setQueues(data)
         })
@@ -58,15 +128,10 @@ export default function QueueDisplay({ storeName, logoUrl }: Props) {
     fetch_()
     const t = setInterval(fetch_, 3000)
     return () => clearInterval(t)
-  }, [prevCalled])
+  }, [prevCalled, announceQueue])
 
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-500 ${flash ? 'bg-blue-600' : 'bg-gray-900'}`}>
-      {/* Audio element for notification sound */}
-      <audio ref={audioRef} preload="auto">
-        <source src="/beep.mp3" type="audio/mpeg" />
-      </audio>
-
       {/* Header */}
       <div className={`flex items-center justify-between px-10 py-5 border-b ${flash ? 'border-blue-400' : 'border-gray-700'}`}>
         <div className="flex items-center gap-4">
@@ -78,13 +143,35 @@ export default function QueueDisplay({ storeName, logoUrl }: Props) {
             <p className={`text-sm font-medium ${flash ? 'text-blue-200' : 'text-gray-400'}`}>Sistem Antrian Digital</p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-white text-4xl font-black font-mono tabular-nums">
-            {time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-          </p>
-          <p className={`text-sm ${flash ? 'text-blue-200' : 'text-gray-400'}`}>
-            {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
+
+        <div className="flex items-center gap-6">
+          {/* Sound Toggle Button */}
+          <button
+            onClick={() => {
+              const nextState = !soundEnabled
+              setSoundEnabled(nextState)
+              if (nextState) {
+                playChime()
+              }
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition border ${
+              soundEnabled
+                ? 'bg-green-500/20 text-green-300 border-green-500/40 hover:bg-green-500/30'
+                : 'bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30'
+            }`}
+          >
+            <span>{soundEnabled ? '🔊 Suara Aktif' : '🔇 Suara Mati'}</span>
+          </button>
+
+          {/* Clock */}
+          <div className="text-right">
+            <p className="text-white text-4xl font-black font-mono tabular-nums">
+              {time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </p>
+            <p className={`text-sm ${flash ? 'text-blue-200' : 'text-gray-400'}`}>
+              {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -103,6 +190,14 @@ export default function QueueDisplay({ storeName, logoUrl }: Props) {
           )}
           {!called && (
             <p className="text-gray-500 text-xl mt-4">Menunggu panggilan kasir...</p>
+          )}
+          {called && (
+            <button
+              onClick={() => announceQueue(called.number)}
+              className="mt-6 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition border border-white/20 flex items-center gap-2"
+            >
+              🔊 Ulangi Suara Panggilan
+            </button>
           )}
         </div>
 
