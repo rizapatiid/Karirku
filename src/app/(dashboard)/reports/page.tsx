@@ -16,9 +16,9 @@ export default async function ReportsPage() {
           </div>
           <h3 className="font-bold text-gray-900 mb-2">Laporan Penjualan</h3>
           <p className="text-sm text-gray-500 mb-6">Laporan detail tiap transaksi, status bayar, dan total gross sales.</p>
-          <button className="flex items-center gap-2 w-full justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded-lg transition">
+          <a href="/api/reports/sales" className="flex items-center gap-2 w-full justify-center bg-gray-100 hover:bg-blue-50 hover:text-blue-600 text-gray-700 font-medium py-2 rounded-lg transition">
             <Download size={18} /> Export Excel
-          </button>
+          </a>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center text-center">
@@ -27,9 +27,9 @@ export default async function ReportsPage() {
           </div>
           <h3 className="font-bold text-gray-900 mb-2">Laporan Laba Rugi</h3>
           <p className="text-sm text-gray-500 mb-6">Kalkulasi omzet, HPP (Harga Pokok), laba kotor, dan laba bersih.</p>
-          <button className="flex items-center gap-2 w-full justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded-lg transition">
+          <a href="/api/reports/profit" className="flex items-center gap-2 w-full justify-center bg-gray-100 hover:bg-green-50 hover:text-green-600 text-gray-700 font-medium py-2 rounded-lg transition">
             <Download size={18} /> Export Excel
-          </button>
+          </a>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center text-center">
@@ -38,9 +38,9 @@ export default async function ReportsPage() {
           </div>
           <h3 className="font-bold text-gray-900 mb-2">Laporan Stok Barang</h3>
           <p className="text-sm text-gray-500 mb-6">Posisi stok akhir barang, histori barang masuk, dan barang keluar.</p>
-          <button className="flex items-center gap-2 w-full justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded-lg transition">
-            <Download size={18} /> Export PDF
-          </button>
+          <a href="/api/reports/stock" className="flex items-center gap-2 w-full justify-center bg-gray-100 hover:bg-orange-50 hover:text-orange-600 text-gray-700 font-medium py-2 rounded-lg transition">
+            <Download size={18} /> Export Excel
+          </a>
         </div>
       </div>
     </div>
