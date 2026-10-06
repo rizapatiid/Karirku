@@ -74,7 +74,7 @@ const speakIndonesianQueue = (num: number) => {
 
 export default function QueueDisplay({ storeName, logoUrl }: Props) {
   const [queues, setQueues] = useState<QueueItem[]>([])
-  const [time, setTime] = useState(new Date())
+  const [time, setTime] = useState<Date | null>(null)
   const [prevCalled, setPrevCalled] = useState<number | null>(null)
   const [flash, setFlash] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
@@ -83,8 +83,9 @@ export default function QueueDisplay({ storeName, logoUrl }: Props) {
   const waiting = queues.filter(q => q.status === 'WAITING')
   const recentDone = queues.filter(q => q.status === 'DONE' || q.status === 'SKIPPED').slice(-5).reverse()
 
-  // Clock
+  // Clock (client-side only to prevent hydration mismatch)
   useEffect(() => {
+    setTime(new Date())
     const t = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
@@ -166,10 +167,10 @@ export default function QueueDisplay({ storeName, logoUrl }: Props) {
           {/* Clock */}
           <div className="text-right">
             <p className="text-white text-4xl font-black font-mono tabular-nums">
-              {time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              {time ? time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--'}
             </p>
             <p className={`text-sm ${flash ? 'text-blue-200' : 'text-gray-400'}`}>
-              {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              {time ? time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : ''}
             </p>
           </div>
         </div>
