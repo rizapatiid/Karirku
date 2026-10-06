@@ -23,7 +23,7 @@ export default function TopProductsChart({ data }: { data: { name: string, value
             ))}
           </Pie>
           <Tooltip 
-            formatter={(value: number) => [`${value} Terjual`, 'Total Penjualan']}
+            formatter={(value: any) => [`${value} Terjual`, 'Total Penjualan']}
             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
           />
           <Legend />
@@ -32,3 +32,4 @@ export default function TopProductsChart({ data }: { data: { name: string, value
     </div>
   )
 }
+
