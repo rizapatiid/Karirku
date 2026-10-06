@@ -48,22 +48,22 @@ model RolePermission {
 }
 
 model Store {
-  id        String   @id @default(uuid())
-  name      String
-  address   String?
-  phone     String?
-  logoUrl   String?
+  id      String  @id @default(uuid())
+  name    String
+  address String?
+  phone   String?
+  logoUrl String?
 
   // Extended Settings
-  taxActive        Boolean @default(false)
-  taxRate          Float   @default(11.0)
-  serviceCharge    Float   @default(0.0)
-  
+  taxActive     Boolean @default(false)
+  taxRate       Float   @default(11.0)
+  serviceCharge Float   @default(0.0)
+
   receiptPaperSize String  @default("58mm")
   receiptFooter    String?
   receiptPromo     String?
 
-  paymentInfo      String? @db.Text
+  paymentInfo String? @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -71,23 +71,24 @@ model Store {
   users    User[]
   products Product[]
   sales    Sale[]
+  queues   Queue[]
 
   @@map("stores")
 }
 
 model User {
-  id           String    @id @default(uuid())
+  id           String     @id @default(uuid())
   roleId       String
   storeId      String?
   name         String
-  email        String?   @unique
-  username     String    @unique
+  email        String?    @unique
+  username     String     @unique
   passwordHash String
   phone        String?
   status       UserStatus @default(ACTIVE)
   lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
   deletedAt    DateTime?
 
   role  Role   @relation(fields: [roleId], references: [id])
@@ -111,13 +112,13 @@ enum UserStatus {
 }
 
 model Category {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
-  slug        String?   @unique
+  slug        String?  @unique
   description String?
-  status      Status    @default(ACTIVE)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  status      Status   @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   products Product[]
 
@@ -137,23 +138,23 @@ model Unit {
 }
 
 model Product {
-  id             String    @id @default(uuid())
-  storeId        String?
-  categoryId     String
-  unitId         String
-  sku            String    @unique
-  barcode        String?   @unique
-  name           String
-  description    String?   @db.Text
-  purchasePrice  Decimal   @db.Decimal(15, 2)
-  sellingPrice   Decimal   @db.Decimal(15, 2)
-  stock          Int       @default(0)
-  minimumStock   Int       @default(0)
-  imageUrl       String?
-  status         Status    @default(ACTIVE)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime?
+  id            String    @id @default(uuid())
+  storeId       String?
+  categoryId    String
+  unitId        String
+  sku           String    @unique
+  barcode       String?   @unique
+  name          String
+  description   String?   @db.Text
+  purchasePrice Decimal   @db.Decimal(15, 2)
+  sellingPrice  Decimal   @db.Decimal(15, 2)
+  stock         Int       @default(0)
+  minimumStock  Int       @default(0)
+  imageUrl      String?
+  status        Status    @default(ACTIVE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
 
   store    Store?   @relation(fields: [storeId], references: [id])
   category Category @relation(fields: [categoryId], references: [id])
@@ -177,18 +178,18 @@ enum Status {
 }
 
 model Supplier {
-  id           String    @id @default(uuid())
-  code         String?   @unique
-  name         String
-  contact      String?
-  phone        String?
-  email        String?
-  address      String?   @db.Text
-  notes        String?   @db.Text
-  status       Status    @default(ACTIVE)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  deletedAt    DateTime?
+  id        String    @id @default(uuid())
+  code      String?   @unique
+  name      String
+  contact   String?
+  phone     String?
+  email     String?
+  address   String?   @db.Text
+  notes     String?   @db.Text
+  status    Status    @default(ACTIVE)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   purchases Purchase[]
 
@@ -263,19 +264,19 @@ model PurchaseItem {
 }
 
 model PurchaseReturn {
-  id               String   @id @default(uuid())
-  purchaseId       String
-  returnNumber     String   @unique
-  returnDate       DateTime
-  reason           String?  @db.Text
-  status           String   @default("COMPLETED")
-  userId           String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id           String   @id @default(uuid())
+  purchaseId   String
+  returnNumber String   @unique
+  returnDate   DateTime
+  reason       String?  @db.Text
+  status       String   @default("COMPLETED")
+  userId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   purchase Purchase @relation(fields: [purchaseId], references: [id])
   user     User     @relation(fields: [userId], references: [id])
-  
+
   items PurchaseReturnItem[]
 
   @@map("purchase_returns")
@@ -300,6 +301,7 @@ model Sale {
   customerId      String?
   userId          String
   invoiceNumber   String     @unique
+  queueNumber     Int? // <--- ADDED QUEUE NUMBER
   transactionDate DateTime
   subtotal        Decimal    @db.Decimal(15, 2)
   discount        Decimal    @default(0) @db.Decimal(15, 2)
@@ -310,21 +312,17 @@ model Sale {
   paymentStatus   String     @default("PAID")
   status          SaleStatus @default(COMPLETED)
   notes           String?    @db.Text
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
 
-  store    Store?    @relation(fields: [storeId], references: [id])
-  customer Customer? @relation(fields: [customerId], references: [id])
-  user     User      @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  items    SaleItem[]
-  payments Payment[]
-  returns  SaleReturn[]
+  store      Store?       @relation(fields: [storeId], references: [id])
+  customer   Customer?    @relation(fields: [customerId], references: [id])
+  user       User         @relation(fields: [userId], references: [id])
+  items      SaleItem[]
+  Payment    Payment[]
+  SaleReturn SaleReturn[]
 
-  @@index([invoiceNumber])
-  @@index([transactionDate])
-  @@index([userId])
-  @@index([customerId])
   @@map("sales")
 }
 
@@ -391,7 +389,7 @@ model SaleReturnItem {
   saleReturnId String
   productId    String
   quantity     Int
-  condition    String?  // e.g. "GOOD", "DAMAGED"
+  condition    String? // e.g. "GOOD", "DAMAGED"
   createdAt    DateTime @default(now())
 
   saleReturn SaleReturn @relation(fields: [saleReturnId], references: [id], onDelete: Cascade)
@@ -515,4 +513,26 @@ model Setting {
   @@map("settings")
 }
 
+model Queue {
+  id        String      @id @default(uuid())
+  storeId   String?
+  number    Int
+  label     String      @default("")
+  status    QueueStatus @default(WAITING)
+  calledAt  DateTime?
+  servedAt  DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
+  store Store? @relation(fields: [storeId], references: [id])
+
+  @@map("queues")
+}
+
+enum QueueStatus {
+  WAITING
+  CALLED
+  SERVING
+  DONE
+  SKIPPED
+}

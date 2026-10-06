@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings, FileText, ArrowRightLeft, ShieldCheck, Wallet } from 'lucide-react'
+import { Users2, LayoutDashboard, ShoppingCart, Package, Users, Settings, FileText, ArrowRightLeft, ShieldCheck, Wallet } from 'lucide-react'
 import { getSession } from '@/actions/auth'
 import LogoutButton from './LogoutButton'
 import { redirect } from 'next/navigation'
@@ -30,6 +30,7 @@ export default async function DashboardLayout({
     { href: '/reports', icon: FileText, label: 'Laporan', roles: ['OWNER'] },
     { href: '/audit-logs', icon: ShieldCheck, label: 'Audit Log', roles: ['OWNER'] },
     { href: '/users', icon: Users, label: 'Pengguna (Role)', roles: ['OWNER'] },
+    { href: '/queue', icon: Users2, label: 'Antrian Pelanggan', roles: ['OWNER', 'ADMIN', 'CASHIER'] },
     { href: '/settings', icon: Settings, label: 'Pengaturan Pro', roles: ['OWNER'] },
   ]
 
@@ -79,3 +80,4 @@ export default async function DashboardLayout({
     </div>
   )
 }
+

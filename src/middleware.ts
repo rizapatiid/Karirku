@@ -9,6 +9,8 @@ export async function middleware(request: NextRequest) {
   const session = request.cookies.get('session')?.value
   const path = request.nextUrl.pathname
   const isLoginPage = path.startsWith('/login')
+  const isPublicRoute = path.startsWith('/queue/display') || path.startsWith('/api/queue')
+  if (isPublicRoute) return NextResponse.next()
 
   // Not logged in
   if (!session) {
@@ -65,3 +67,4 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 }
+
