@@ -118,7 +118,7 @@ export default function PosClient({ initialProducts, initialCustomers }: { initi
     })
 
     if (result.success) {
-      setCheckoutSuccess({ invoice: result.invoice, id: result.id })
+      setCheckoutSuccess({ invoice: result.invoiceNumber!, id: result.saleId! })
       setCart([])
       setAmountPaid('')
     } else {
@@ -324,3 +324,4 @@ export default function PosClient({ initialProducts, initialCustomers }: { initi
     </div>
   )
 }
+
