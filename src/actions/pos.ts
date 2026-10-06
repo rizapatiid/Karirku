@@ -17,6 +17,8 @@ interface CheckoutData {
   discount: number
 }
 
+import { getSession } from './auth'
+
 export async function processCheckout(data: CheckoutData) {
   try {
     // Basic validations
@@ -24,9 +26,9 @@ export async function processCheckout(data: CheckoutData) {
       throw new Error('Keranjang kosong')
     }
 
-    // In a real app, user ID comes from session. Hardcoding Admin for now.
-    const user = await prisma.user.findFirst({ where: { username: 'admin' } })
-    if (!user) throw new Error('User tidak valid')
+    const session = await getSession()
+    if (!session) throw new Error('Anda harus login')
+    const user = { id: session.userId }
     
     // Default customer if none selected
     let customerId = data.customerId

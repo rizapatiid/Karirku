@@ -1,11 +1,17 @@
 import Link from 'next/link'
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, ShoppingCart, Package, Users, Settings, FileText, ArrowRightLeft } from 'lucide-react'
+import { getSession } from '@/actions/auth'
+import LogoutButton from './LogoutButton'
+import { redirect } from 'next/navigation'
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const session = await getSession()
+  if (!session) redirect('/login')
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -32,7 +38,7 @@ export default function DashboardLayout({
             <span className="font-medium">Produk</span>
           </Link>
           <Link href="/stock" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <Package size={20} />
+            <ArrowRightLeft size={20} />
             <span className="font-medium">Pergerakan Stok</span>
           </Link>
           <Link href="/purchases" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
@@ -48,7 +54,7 @@ export default function DashboardLayout({
             <span className="font-medium">Keuangan</span>
           </Link>
           <Link href="/reports" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
-            <Settings size={20} />
+            <FileText size={20} />
             <span className="font-medium">Laporan</span>
           </Link>
           <Link href="/audit-logs" className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
@@ -62,10 +68,7 @@ export default function DashboardLayout({
         </nav>
 
         <div className="p-4 border-t border-gray-200">
-          <Link href="/login" className="flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg">
-            <LogOut size={20} />
-            <span className="font-medium">Logout</span>
-          </Link>
+          <LogoutButton />
         </div>
       </aside>
 
@@ -75,11 +78,11 @@ export default function DashboardLayout({
           <h1 className="text-lg font-semibold text-gray-800">Sistem POS KASIRKU</h1>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-              A
+              {session.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-700">Admin</p>
-              <p className="text-xs text-gray-500">admin@kasirku.local</p>
+              <p className="text-sm font-medium text-gray-700">{session.name}</p>
+              <p className="text-xs text-gray-500">{session.role}</p>
             </div>
           </div>
         </header>

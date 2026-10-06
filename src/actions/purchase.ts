@@ -17,10 +17,13 @@ interface PurchaseInput {
   notes?: string
 }
 
+import { getSession } from './auth'
+
 export async function createPurchase(data: PurchaseInput) {
   try {
-    const user = await prisma.user.findFirst({ where: { username: 'admin' } })
-    if (!user) throw new Error('User tidak valid')
+    const session = await getSession()
+    if (!session) throw new Error('Anda harus login')
+    const user = { id: session.userId }
 
     let subtotal = 0
     const itemsToCreate = data.items.map(item => {

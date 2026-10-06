@@ -3,6 +3,7 @@
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { getSession } from './auth'
 
 export async function createExpense(formData: FormData) {
   try {
@@ -14,8 +15,9 @@ export async function createExpense(formData: FormData) {
       category = await prisma.expenseCategory.create({ data: { name: 'Operasional' } })
     }
 
-    const user = await prisma.user.findFirst({ where: { username: 'admin' } })
-    if (!user) throw new Error('User invalid')
+    const session = await getSession()
+    if (!session) throw new Error('Anda harus login')
+    const user = { id: session.userId }
 
     const expenseNumber = `EXP-${new Date().getTime()}`
 
