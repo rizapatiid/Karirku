@@ -71,22 +71,32 @@ export default function PosClient({ initialProducts, initialCategories, initialC
 
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // Global Keyboard Shortcuts (F2 = Search, Esc = Clear)
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'F2') {
-        e.preventDefault()
-        searchInputRef.current?.focus()
-      } else if (e.key === 'Escape') {
-        if (cart.length > 0 && confirm('Kosongkan keranjang belanja?')) {
-          setCart([])
-          setAmountPaid('')
-        }
-      }
-    }
-    window.addEventListener('keydown', handleGlobalKeyDown)
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [cart])
+  const [useTax, setUseTax] = useState(storeConfig.taxActive)
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  const discount = 0
+  const taxAmount = useTax ? (subtotal - discount) * ((storeConfig.taxRate + storeConfig.serviceCharge) / 100) : 0
+  const total = subtotal - discount + taxAmount
+
+  // Smart Nominal Buttons helper (Calculates realistic quick cash buttons based on total)
+  const smartCashOptions = useMemo(() => {
+    if (total <= 0) return [50000, 100000, 200000]
+    const opts = new Set<number>()
+    opts.add(total) // Exact amount
+
+    const next5k = Math.ceil(total / 5000) * 5000
+    if (next5k > total) opts.add(next5k)
+
+    const next10k = Math.ceil(total / 10000) * 10000
+    if (next10k > total) opts.add(next10k)
+
+    const next50k = Math.ceil(total / 50000) * 50000
+    if (next50k > total) opts.add(next50k)
+
+    if (total < 50000) opts.add(50000)
+    if (total < 100000) opts.add(100000)
+
+    return Array.from(opts).slice(0, 4)
+  }, [total])
 
   // Barcode / Enter search auto-add
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -173,32 +183,31 @@ export default function PosClient({ initialProducts, initialCategories, initialC
     }
   }
 
-  const [useTax, setUseTax] = useState(storeConfig.taxActive)
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-  const discount = 0
-  const taxAmount = useTax ? (subtotal - discount) * ((storeConfig.taxRate + storeConfig.serviceCharge) / 100) : 0
-  const total = subtotal - discount + taxAmount
+  // Global Keyboard Shortcuts (F2 = Search, Esc = Clear, 1-4 = Smart Cash)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement
+      const isInputFocused = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA'
 
-  // Smart Nominal Buttons helper (Calculates realistic quick cash buttons based on total)
-  const smartCashOptions = useMemo(() => {
-    if (total <= 0) return [50000, 100000, 200000]
-    const opts = new Set<number>()
-    opts.add(total) // Exact amount
-
-    const next5k = Math.ceil(total / 5000) * 5000
-    if (next5k > total) opts.add(next5k)
-
-    const next10k = Math.ceil(total / 10000) * 10000
-    if (next10k > total) opts.add(next10k)
-
-    const next50k = Math.ceil(total / 50000) * 50000
-    if (next50k > total) opts.add(next50k)
-
-    if (total < 50000) opts.add(50000)
-    if (total < 100000) opts.add(100000)
-
-    return Array.from(opts).slice(0, 4)
-  }, [total])
+      if (e.key === 'F2') {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      } else if (e.key === 'Escape') {
+        if (cart.length > 0 && confirm('Kosongkan keranjang belanja?')) {
+          setCart([])
+          setAmountPaid('')
+        }
+      } else if (!isInputFocused && paymentMethod === 'CASH' && ['1', '2', '3', '4'].includes(e.key)) {
+        const index = parseInt(e.key) - 1
+        if (smartCashOptions[index] !== undefined) {
+          e.preventDefault()
+          setAmountPaid(smartCashOptions[index].toString())
+        }
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [cart, paymentMethod, smartCashOptions])
 
   // Auto-fill exact amount for QRIS/Debit/Transfer
   useEffect(() => {
@@ -208,6 +217,34 @@ export default function PosClient({ initialProducts, initialCategories, initialC
   }, [paymentMethod, total])
 
   const formatRupiah = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num)
+
+  const handleDirectPrint = (saleId: string) => {
+    const iframeId = 'direct-print-iframe'
+    let iframe = document.getElementById(iframeId) as HTMLIFrameElement
+    
+    if (!iframe) {
+      iframe = document.createElement('iframe')
+      iframe.id = iframeId
+      iframe.style.position = 'fixed'
+      iframe.style.right = '0'
+      iframe.style.bottom = '0'
+      iframe.style.width = '0'
+      iframe.style.height = '0'
+      iframe.style.border = '0'
+      document.body.appendChild(iframe)
+    }
+
+    iframe.onload = () => {
+      try {
+        iframe.contentWindow?.focus()
+        iframe.contentWindow?.print()
+      } catch (e) {
+        console.error('Direct print error:', e)
+      }
+    }
+
+    iframe.src = `/sales/${saleId}/receipt`
+  }
 
   const handleCheckout = async () => {
     const paid = Number(amountPaid.replace(/[^0-9]/g, ''))
@@ -233,6 +270,10 @@ export default function PosClient({ initialProducts, initialCategories, initialC
       setCart([])
       setAmountPaid('')
       setOrderNote('')
+      // Auto-trigger direct print without opening new tab
+      setTimeout(() => {
+        handleDirectPrint(result.saleId!)
+      }, 300)
     } else {
       setError(result.error || 'Terjadi kesalahan sistem saat checkout')
     }
@@ -268,13 +309,12 @@ export default function PosClient({ initialProducts, initialCategories, initialC
         </div>
         
         <div className="flex gap-4">
-          <a 
-            href={`/sales/${checkoutSuccess.id}/receipt`} 
-            target="_blank" 
-            className="px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-sm rounded-2xl font-bold transition shadow-lg flex items-center gap-2.5"
+          <button 
+            onClick={() => handleDirectPrint(checkoutSuccess.id)}
+            className="px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-sm rounded-2xl font-bold transition shadow-lg flex items-center gap-2.5 cursor-pointer"
           >
             <Printer size={18} /> Cetak Struk Belanja
-          </a>
+          </button>
           <button 
             onClick={() => setCheckoutSuccess(null)}
             className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm rounded-2xl font-bold transition shadow-lg flex items-center gap-2"
@@ -660,7 +700,10 @@ export default function PosClient({ initialProducts, initialCategories, initialC
           {paymentMethod === 'CASH' && (
             <div className="space-y-1">
               <div className="flex justify-between text-[11px] font-bold text-gray-600">
-                <span>Uang Diterima (CASH)</span>
+                <span className="flex items-center gap-1">
+                  <span>Uang Diterima</span>
+                  <span className="text-[9px] text-gray-400 font-medium">(Tekan 1-4 di keyboard)</span>
+                </span>
                 {Number(amountPaid) >= total && (
                   <span className="text-green-600 font-extrabold">Kembali: {formatRupiah(Number(amountPaid) - total)}</span>
                 )}
@@ -673,17 +716,33 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-black text-base text-gray-900"
               />
 
-              {/* Dynamic Smart Quick Cash Options */}
+              {/* Dynamic Smart Quick Cash Options with 1-4 Shortcut Badges */}
               <div className="grid grid-cols-4 gap-1">
-                {smartCashOptions.map((opt, idx) => (
-                  <button 
-                    key={opt + idx}
-                    onClick={() => setAmountPaid(opt.toString())} 
-                    className="py-1 bg-gray-50 hover:bg-blue-50 border border-gray-200 rounded-md text-[10px] font-black text-gray-800 transition truncate"
-                  >
-                    {opt === total ? 'Uang Pas' : `${(opt / 1000).toLocaleString('id-ID')}k`}
-                  </button>
-                ))}
+                {smartCashOptions.map((opt, idx) => {
+                  const keyNum = idx + 1
+                  const isSelected = amountPaid === opt.toString()
+                  return (
+                    <button 
+                      key={opt + idx}
+                      onClick={() => setAmountPaid(opt.toString())} 
+                      className={`py-1.5 px-1 rounded-lg text-[10px] font-extrabold transition flex items-center justify-between border ${
+                        isSelected 
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-xs' 
+                          : 'bg-gray-50 hover:bg-blue-50/70 text-gray-800 border-gray-200 hover:border-blue-300'
+                      }`}
+                      title={`Shortcut keyboard tekan angka ${keyNum}`}
+                    >
+                      <span className={`text-[9px] px-1 rounded font-mono font-bold ${
+                        isSelected ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        {keyNum}
+                      </span>
+                      <span className="truncate">
+                        {opt === total ? 'Uang Pas' : `${(opt / 1000).toLocaleString('id-ID')}k`}
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
