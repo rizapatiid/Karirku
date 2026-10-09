@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 type QueueStatus = 'WAITING' | 'CALLED' | 'SERVING' | 'DONE' | 'SKIPPED'
 
@@ -41,7 +41,6 @@ const playChime = () => {
       osc.stop(ctx.currentTime + start + duration)
     }
 
-    // Two-tone ding-dong chime (523Hz = C5, 659Hz = E5)
     playTone(523.25, 0.0, 0.6)
     playTone(659.25, 0.25, 0.8)
   } catch (e) {
@@ -55,16 +54,14 @@ const speakIndonesianQueue = (num: number) => {
 
   window.speechSynthesis.cancel()
 
-  // Format: "Nomor antrean 0 0 1, silakan menuju kasir."
   const paddedNum = num.toString().padStart(3, '0').split('').join(' ')
   const text = `Nomor antrean ${paddedNum}, silakan menuju kasir.`
 
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.lang = 'id-ID'
-  utterance.rate = 0.88 // clear tempo
+  utterance.rate = 0.88
   utterance.pitch = 1.05
 
-  // Find Indonesian voice if present
   const voices = window.speechSynthesis.getVoices()
   const idVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ID'))
   if (idVoice) utterance.voice = idVoice
@@ -77,7 +74,6 @@ export default function QueueDisplay({ storeName, logoUrl }: Props) {
   const [time, setTime] = useState<Date | null>(null)
   const [prevCalled, setPrevCalled] = useState<number | null>(null)
   const [flash, setFlash] = useState(false)
-  const [soundEnabled, setSoundEnabled] = useState(true)
 
   const called = queues.find(q => q.status === 'CALLED')
   const waiting = queues.filter(q => q.status === 'WAITING')
@@ -101,13 +97,11 @@ export default function QueueDisplay({ storeName, logoUrl }: Props) {
 
   // Announcement trigger function
   const announceQueue = useCallback((num: number) => {
-    if (!soundEnabled) return
     playChime()
-    // Delay voice slightly after chime
     setTimeout(() => {
       speakIndonesianQueue(num)
     }, 700)
-  }, [soundEnabled])
+  }, [])
 
   // Poll queue every 3 seconds
   useEffect(() => {
@@ -145,34 +139,14 @@ export default function QueueDisplay({ storeName, logoUrl }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          {/* Sound Toggle Button */}
-          <button
-            onClick={() => {
-              const nextState = !soundEnabled
-              setSoundEnabled(nextState)
-              if (nextState) {
-                playChime()
-              }
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition border ${
-              soundEnabled
-                ? 'bg-green-500/20 text-green-300 border-green-500/40 hover:bg-green-500/30'
-                : 'bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30'
-            }`}
-          >
-            <span>{soundEnabled ? '🔊 Suara Aktif' : '🔇 Suara Mati'}</span>
-          </button>
-
-          {/* Clock */}
-          <div className="text-right">
-            <p className="text-white text-4xl font-black font-mono tabular-nums">
-              {time ? time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--'}
-            </p>
-            <p className={`text-sm ${flash ? 'text-blue-200' : 'text-gray-400'}`}>
-              {time ? time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : ''}
-            </p>
-          </div>
+        {/* Clock */}
+        <div className="text-right">
+          <p className="text-white text-4xl font-black font-mono tabular-nums">
+            {time ? time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--'}
+          </p>
+          <p className={`text-sm ${flash ? 'text-blue-200' : 'text-gray-400'}`}>
+            {time ? time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+          </p>
         </div>
       </div>
 
@@ -191,14 +165,6 @@ export default function QueueDisplay({ storeName, logoUrl }: Props) {
           )}
           {!called && (
             <p className="text-gray-500 text-xl mt-4">Menunggu panggilan kasir...</p>
-          )}
-          {called && (
-            <button
-              onClick={() => announceQueue(called.number)}
-              className="mt-6 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition border border-white/20 flex items-center gap-2"
-            >
-              🔊 Ulangi Suara Panggilan
-            </button>
           )}
         </div>
 
