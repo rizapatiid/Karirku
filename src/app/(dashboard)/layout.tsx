@@ -81,21 +81,21 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans text-slate-800">
+    <div className="flex h-screen bg-gray-100 font-sans">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col z-20">
+      <aside className="w-64 bg-white border-r border-gray-200/80 flex flex-col shadow-xs z-20">
         {/* Header Branding */}
-        <div className="h-16 px-5 flex items-center gap-3 border-b border-slate-200 bg-white">
+        <div className="h-16 px-4 flex items-center gap-3 border-b border-gray-200/80 bg-white">
           {store?.logoUrl ? (
-            <img src={store.logoUrl} alt="Logo" className="w-9 h-9 object-contain bg-slate-100 rounded-lg p-1 border border-slate-200" />
+            <img src={store.logoUrl} alt="Logo" className="w-9 h-9 object-contain bg-blue-50 rounded-2xl p-1 border border-blue-100 shadow-2xs" />
           ) : (
-            <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-xs">
+            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-sm">
               <StoreIcon size={18} />
             </div>
           )}
           <div className="min-w-0">
-            <h2 className="text-sm font-bold text-slate-900 leading-tight truncate uppercase tracking-tight">{store?.name || 'KASIRKU'}</h2>
-            <p className="text-[11px] text-slate-500 font-medium">Sistem POS</p>
+            <h2 className="text-sm font-black text-gray-900 tracking-tight leading-tight truncate uppercase">{store?.name || 'KASIRKU'}</h2>
+            <p className="text-[10px] text-blue-600 font-bold tracking-wide">Enterprise POS System</p>
           </div>
         </div>
 
@@ -103,14 +103,14 @@ export default async function DashboardLayout({
         <SidebarNav groups={filteredGroups} />
 
         {/* User Card & Logout Footer */}
-        <div className="p-3 border-t border-slate-200 bg-slate-50/50 space-y-2">
-          <div className="flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-200 shadow-xs">
-            <div className="w-8 h-8 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
+        <div className="p-3 border-t border-gray-200/80 bg-gray-50/60 space-y-2">
+          <div className="flex items-center gap-3 p-2 bg-white rounded-2xl border border-gray-200/70 shadow-2xs">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-xs">
               {session.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-slate-800 truncate">{session.name}</p>
-              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border inline-block ${roleBadge[role] || 'bg-slate-100 text-slate-600'}`}>
+              <p className="text-xs font-bold text-gray-900 truncate leading-tight">{session.name}</p>
+              <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-md border inline-block mt-0.5 ${roleBadge[role] || 'bg-gray-100 text-gray-600'}`}>
                 {roleLabel[role] || role}
               </span>
             </div>
@@ -123,37 +123,26 @@ export default async function DashboardLayout({
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top Navigation Header */}
-        <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-xs z-10">
+        <header className="h-14 bg-white border-b border-gray-200/80 flex items-center justify-between px-6 shadow-2xs z-10">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-slate-800 tracking-tight">{store?.name || 'KASIRKU'}</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Sistem Online
-            </span>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Sistem Online</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
             <a
               href="/queue/display"
               target="_blank"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold rounded-lg border border-purple-200 transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-extrabold rounded-xl border border-purple-200 transition shadow-2xs"
             >
-              Layar TV Antrian
+              <span>Layar TV Antrian</span>
             </a>
-            
-            <div className="h-4 w-px bg-slate-200" />
-
-            <div className="flex items-center gap-2">
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${roleBadge[role] || 'bg-slate-100 text-slate-600'}`}>
-                {roleLabel[role] || role}
-              </span>
-              <span className="text-xs font-semibold text-slate-700">{session.name}</span>
-            </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-6 bg-slate-50">
+        <div className="flex-1 overflow-auto p-6 bg-gray-50/80">
           {children}
         </div>
       </main>
