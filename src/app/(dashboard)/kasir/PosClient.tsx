@@ -2,7 +2,13 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { processCheckout } from '@/actions/pos'
-import { Search, ShoppingCart, Plus, Minus, Trash2, CheckCircle2, QrCode, CreditCard, Banknote, Building2, Utensils, ShoppingBag, Truck, FileText, Keyboard, X, Sparkles, AlertCircle } from 'lucide-react'
+import { 
+  Search, ShoppingCart, Plus, Minus, Trash2, CheckCircle2, QrCode, 
+  CreditCard, Banknote, Building2, Utensils, ShoppingBag, Truck, 
+  FileText, Keyboard, X, Sparkles, AlertCircle, Layers, UtensilsCrossed, 
+  CupSoda, Coffee, Cookie, IceCream, Package, Printer, Wifi, Clock, 
+  UserCheck, Receipt, ArrowRight, Zap, ShieldCheck
+} from 'lucide-react'
 
 type Product = {
   id: string
@@ -35,16 +41,16 @@ interface Props {
   }
 }
 
-// Category emoji helper for unique intuitive visuals
-const getCategoryIcon = (name: string) => {
+// Render clean SVG Lucide component dynamically for category
+const CategorySvgIcon = ({ name, size = 15 }: { name: string; size?: number }) => {
   const lower = name.toLowerCase()
-  if (lower.includes('makan') || lower.includes('food')) return '🍔'
-  if (lower.includes('minum') || lower.includes('drink') || lower.includes('beverage')) return '🥤'
-  if (lower.includes('kopi') || lower.includes('coffee')) return '☕'
-  if (lower.includes('snack') || lower.includes('camil')) return '🍿'
-  if (lower.includes('dessert') || lower.includes('es') || lower.includes('ice')) return '🍦'
-  if (lower.includes('paket') || lower.includes('combo')) return '🍱'
-  return '📦'
+  if (lower.includes('makan') || lower.includes('food')) return <UtensilsCrossed size={size} />
+  if (lower.includes('minum') || lower.includes('drink') || lower.includes('beverage')) return <CupSoda size={size} />
+  if (lower.includes('kopi') || lower.includes('coffee')) return <Coffee size={size} />
+  if (lower.includes('snack') || lower.includes('camil')) return <Cookie size={size} />
+  if (lower.includes('dessert') || lower.includes('es') || lower.includes('ice')) return <IceCream size={size} />
+  if (lower.includes('paket') || lower.includes('combo')) return <Package size={size} />
+  return <Layers size={size} />
 }
 
 export default function PosClient({ initialProducts, initialCategories, initialCustomers, storeConfig }: Props) {
@@ -236,37 +242,45 @@ export default function PosClient({ initialProducts, initialCategories, initialC
 
   if (checkoutSuccess) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[500px] bg-white rounded-3xl shadow-lg border border-gray-200 p-8">
-        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
-          <CheckCircle2 className="w-12 h-12 text-green-600 animate-bounce" />
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[520px] bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/20 rounded-3xl shadow-xl border border-gray-200 p-8 backdrop-blur-sm">
+        <div className="w-24 h-24 bg-green-100/80 rounded-full flex items-center justify-center mb-5 shadow-inner">
+          <CheckCircle2 className="w-14 h-14 text-green-600 animate-bounce" />
         </div>
-        <h2 className="text-3xl font-black text-gray-800 mb-1">Pembayaran Berhasil!</h2>
-        <p className="text-gray-500 text-sm mb-4">Transaksi telah tersimpan dalam sistem</p>
+        
+        <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-1">Pembayaran Berhasil!</h2>
+        <p className="text-gray-500 text-sm mb-4">Transaksi telah tersimpan dalam sistem database</p>
         
         {checkoutSuccess.queueNumber && (
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-3xl px-12 py-6 my-4 text-center shadow-xl transform scale-105">
-            <span className="text-xs font-bold text-blue-200 uppercase tracking-widest block mb-1">NOMOR ANTREAN PELANGGAN</span>
-            <span className="text-6xl font-black tracking-tight">
+          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white rounded-3xl px-12 py-6 my-4 text-center shadow-xl transform hover:scale-105 transition-transform duration-300">
+            <div className="flex items-center justify-center gap-2 text-xs font-bold text-blue-200 uppercase tracking-widest mb-1">
+              <Zap size={14} /> NOMOR ANTREAN PELANGGAN
+            </div>
+            <span className="text-6xl font-black tracking-tight font-mono">
               #{String(checkoutSuccess.queueNumber).padStart(3, '0')}
             </span>
           </div>
         )}
 
-        <p className="text-gray-500 mb-6 text-sm">No. Struk Invoice: <span className="font-mono font-bold text-gray-800">{checkoutSuccess.invoice}</span></p>
+        <div className="flex items-center gap-2 text-gray-600 text-sm mb-6 bg-white px-4 py-2 rounded-2xl border border-gray-200 shadow-2xs">
+          <Receipt size={16} className="text-blue-600" />
+          <span>No. Struk Invoice:</span>
+          <span className="font-mono font-bold text-gray-900">{checkoutSuccess.invoice}</span>
+        </div>
         
         <div className="flex gap-4">
           <a 
             href={`/sales/${checkoutSuccess.id}/receipt`} 
             target="_blank" 
-            className="px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-sm rounded-2xl font-bold transition shadow-md flex items-center gap-2"
+            className="px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-sm rounded-2xl font-bold transition shadow-lg flex items-center gap-2.5"
           >
-            🖨️ Cetak Struk Belanja
+            <Printer size={18} /> Cetak Struk Belanja
           </a>
           <button 
             onClick={() => setCheckoutSuccess(null)}
-            className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-2xl font-bold transition shadow-md"
+            className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm rounded-2xl font-bold transition shadow-lg flex items-center gap-2"
           >
-            + Transaksi Baru
+            <span>+ Transaksi Baru</span>
+            <ArrowRight size={16} />
           </button>
         </div>
       </div>
@@ -277,8 +291,26 @@ export default function PosClient({ initialProducts, initialCategories, initialC
     <div className="flex flex-col lg:flex-row gap-6 h-full min-h-[calc(100vh-7.5rem)]">
       {/* Kiri: Katalog Produk & Kategori */}
       <div className="flex-1 flex flex-col bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
-        {/* Top Header Bar with Search */}
+        {/* Top Header Bar with Live Indicator & Search */}
         <div className="p-4 border-b border-gray-200 bg-white space-y-3">
+          {/* Top Info Strip */}
+          <div className="flex items-center justify-between text-xs text-gray-500 pb-1 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5 font-bold text-green-600">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-ping" />
+                <Wifi size={13} /> POS System Online
+              </span>
+              <span className="text-gray-300">•</span>
+              <span className="flex items-center gap-1 text-gray-500">
+                <ShieldCheck size={13} className="text-blue-500" /> Terhubung Ke Database
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 font-bold text-gray-600">
+              <Sparkles size={13} className="text-yellow-500" />
+              <span>{storeConfig.name}</span>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search Input with Clear Button */}
             <div className="relative flex-1">
@@ -301,42 +333,47 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             </div>
 
             {/* Customer Select */}
-            <select
-              value={selectedCustomer}
-              onChange={(e) => setSelectedCustomer(e.target.value)}
-              className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 text-sm text-gray-700 outline-none font-bold"
-            >
-              <option value="">👤 Pelanggan Umum</option>
-              {initialCustomers.map(c => (
-                <option key={c.id} value={c.id}>👤 {c.name} {c.phone ? `(${c.phone})` : ''}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <UserCheck className="absolute left-3.5 top-3 text-gray-400 w-4 h-4 pointer-events-none" />
+              <select
+                value={selectedCustomer}
+                onChange={(e) => setSelectedCustomer(e.target.value)}
+                className="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 text-sm text-gray-700 outline-none font-bold appearance-none cursor-pointer"
+              >
+                <option value="">Pelanggan Umum</option>
+                {initialCustomers.map(c => (
+                  <option key={c.id} value={c.id}>{c.name} {c.phone ? `(${c.phone})` : ''}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Intuitive Category Filter Bar with Emojis */}
+          {/* Pure SVG Lucide Category Filter Bar */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             <button
               onClick={() => setSelectedCategory('ALL')}
-              className={`px-4 py-2 rounded-2xl text-xs font-black transition shrink-0 flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-2xl text-xs font-black transition shrink-0 flex items-center gap-2 ${
                 selectedCategory === 'ALL'
                   ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              <span>🏷️</span> Semua Produk ({initialProducts.length})
+              <Layers size={15} />
+              <span>Semua Produk ({initialProducts.length})</span>
             </button>
 
             {initialCategories.map(cat => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-4 py-2 rounded-2xl text-xs font-black transition shrink-0 flex items-center gap-1.5 ${
+                className={`px-4 py-2 rounded-2xl text-xs font-black transition shrink-0 flex items-center gap-2 ${
                   selectedCategory === cat.id
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                <span>{getCategoryIcon(cat.name)}</span> {cat.name}
+                <CategorySvgIcon name={cat.name} size={15} />
+                <span>{cat.name}</span>
               </button>
             ))}
           </div>
@@ -362,13 +399,17 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 >
                   {/* Quantity In Cart Counter */}
                   {inCart && (
-                    <div className="absolute top-3 right-3 bg-blue-600 text-white text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-md animate-pulse">
+                    <div className="absolute top-3 right-3 bg-blue-600 text-white text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-md animate-pulse flex items-center gap-1">
+                      <ShoppingCart size={11} />
                       {inCart.quantity}x
                     </div>
                   )}
 
                   <div>
-                    <div className="text-[10px] font-bold text-gray-400 tracking-wider uppercase mb-1">{product.sku}</div>
+                    <div className="text-[10px] font-bold text-gray-400 tracking-wider uppercase mb-1 flex items-center gap-1">
+                      <CategorySvgIcon name={product.category} size={11} />
+                      {product.sku}
+                    </div>
                     <h3 className="font-bold text-gray-800 text-sm line-clamp-2 leading-snug group-hover:text-blue-600 transition">
                       {product.name}
                     </h3>
@@ -400,13 +441,16 @@ export default function PosClient({ initialProducts, initialCategories, initialC
           )}
         </div>
 
-        {/* Footer Keyboard Help */}
+        {/* Footer Keyboard Help Bar with SVG Icons */}
         <div className="px-5 py-2.5 bg-gray-100 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500 font-medium">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1"><Keyboard size={13} /> <b className="bg-white border border-gray-300 px-1.5 rounded-md shadow-2xs">F2</b> Cari Produk</span>
             <span className="flex items-center gap-1"><b className="bg-white border border-gray-300 px-1.5 rounded-md shadow-2xs">Esc</b> Kosongkan Keranjang</span>
           </div>
-          <span className="font-bold text-gray-600">{storeConfig.name}</span>
+          <div className="flex items-center gap-1 text-gray-600 font-bold">
+            <ShieldCheck size={14} className="text-blue-600" />
+            <span>{storeConfig.name}</span>
+          </div>
         </div>
       </div>
 
