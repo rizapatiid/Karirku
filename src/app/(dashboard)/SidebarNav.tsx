@@ -33,15 +33,15 @@ export default function SidebarNav({ groups }: { groups: Group[] }) {
   const pathname = usePathname()
 
   return (
-    <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+    <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-thin">
       {groups.map(group => (
         <div key={group.group}>
           {group.group !== 'Utama' && (
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-3 mb-1.5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1 mb-2">
               {group.group}
             </p>
           )}
-          <div className="space-y-0.5">
+          <div className="grid grid-cols-2 gap-2.5">
             {group.items.map(item => {
               const isActive = pathname === item.href || (item.href !== '/owner' && item.href !== '/admin' && item.href !== '/kasir' && pathname.startsWith(item.href))
               const Icon = ICON_MAP[item.iconName] || HelpCircle
@@ -50,14 +50,18 @@ export default function SidebarNav({ groups }: { groups: Group[] }) {
                 <Link
                   key={item.href + item.label}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all font-medium text-sm group ${
+                  className={`flex flex-col items-center justify-center text-center p-2.5 aspect-square rounded-2xl transition-all duration-200 group border ${
                     isActive
-                      ? 'bg-blue-600 text-white font-bold shadow-sm'
-                      : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                      ? 'bg-gradient-to-b from-blue-600 to-indigo-600 text-white font-bold shadow-md border-blue-600 scale-[1.02]'
+                      : 'bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 shadow-2xs'
                   }`}
                 >
-                  <Icon size={18} className={`shrink-0 transition-transform ${isActive ? 'scale-105' : 'group-hover:scale-110'}`} />
-                  <span className="truncate">{item.label}</span>
+                  <div className={`p-2 rounded-xl transition-transform ${isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600 group-hover:scale-110'}`}>
+                    <Icon size={22} />
+                  </div>
+                  <span className="text-[11px] font-extrabold mt-1.5 leading-tight line-clamp-2 px-0.5">
+                    {item.label}
+                  </span>
                 </Link>
               )
             })}
@@ -67,3 +71,4 @@ export default function SidebarNav({ groups }: { groups: Group[] }) {
     </nav>
   )
 }
+
