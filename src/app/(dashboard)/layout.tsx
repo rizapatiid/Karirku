@@ -3,7 +3,7 @@ import { getSession } from '@/actions/auth'
 import LogoutButton from './LogoutButton'
 import SidebarNav from './SidebarNav'
 import { redirect } from 'next/navigation'
-import { Store as StoreIcon, Tv, ExternalLink } from 'lucide-react'
+import { Store as StoreIcon, Monitor } from 'lucide-react'
 
 export default async function DashboardLayout({
   children,
@@ -135,13 +135,10 @@ export default async function DashboardLayout({
             <a
               href="/queue/display"
               target="_blank"
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-black rounded-2xl shadow-md shadow-purple-500/20 hover:shadow-lg transition-all duration-200 group border border-purple-500/30"
+              className="flex items-center gap-2 px-3.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-extrabold rounded-xl border border-purple-200 transition shadow-2xs group"
             >
-              <div className="p-1 rounded-lg bg-white/20 text-white group-hover:scale-110 transition-transform">
-                <Tv size={15} />
-              </div>
+              <Monitor size={15} className="text-purple-600 group-hover:scale-110 transition-transform shrink-0" />
               <span>Layar TV Antrian</span>
-              <ExternalLink size={13} className="text-purple-200 group-hover:translate-x-0.5 transition-transform" />
             </a>
           </div>
         </header>
