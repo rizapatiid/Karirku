@@ -41,7 +41,7 @@ export default function SidebarNav({ groups }: { groups: Group[] }) {
               {group.group}
             </p>
           )}
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="flex flex-col space-y-2.5">
             {group.items.map(item => {
               const isActive = pathname === item.href || (item.href !== '/owner' && item.href !== '/admin' && item.href !== '/kasir' && pathname.startsWith(item.href))
               const Icon = ICON_MAP[item.iconName] || HelpCircle
@@ -50,16 +50,16 @@ export default function SidebarNav({ groups }: { groups: Group[] }) {
                 <Link
                   key={item.href + item.label}
                   href={item.href}
-                  className={`flex flex-col items-center justify-center text-center p-2.5 aspect-square rounded-2xl transition-all duration-200 group border ${
+                  className={`flex flex-col items-center justify-center text-center p-3.5 rounded-2xl transition-all duration-200 group border ${
                     isActive
-                      ? 'bg-gradient-to-b from-blue-600 to-indigo-600 text-white font-bold shadow-md border-blue-600 scale-[1.02]'
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold shadow-md border-blue-600 scale-[1.01]'
                       : 'bg-white text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 shadow-2xs'
                   }`}
                 >
-                  <div className={`p-2 rounded-xl transition-transform ${isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600 group-hover:scale-110'}`}>
-                    <Icon size={22} />
+                  <div className={`p-2.5 rounded-xl transition-transform ${isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-600 group-hover:scale-110'}`}>
+                    <Icon size={24} />
                   </div>
-                  <span className="text-[11px] font-extrabold mt-1.5 leading-tight line-clamp-2 px-0.5">
+                  <span className="text-xs font-extrabold mt-2 leading-tight px-1">
                     {item.label}
                   </span>
                 </Link>
