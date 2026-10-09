@@ -288,11 +288,11 @@ export default function PosClient({ initialProducts, initialCategories, initialC
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-full min-h-[calc(100vh-7.5rem)]">
+    <div className="flex flex-col lg:flex-row gap-5 h-full min-h-[calc(100vh-7.5rem)]">
       {/* Kiri: Katalog Produk & Kategori */}
-      <div className="flex-1 flex flex-col bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
         {/* Top Header Bar with Live Indicator & Search */}
-        <div className="p-4 border-b border-gray-200 bg-white space-y-3">
+        <div className="p-3.5 border-b border-gray-200 bg-white space-y-3">
           {/* Top Info Strip */}
           <div className="flex items-center justify-between text-xs text-gray-500 pb-1 border-b border-gray-100">
             <div className="flex items-center gap-3">
@@ -311,10 +311,10 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-2.5">
             {/* Search Input with Clear Button */}
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-3 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3.5 top-2.5 text-gray-400 w-4 h-4" />
               <input 
                 ref={searchInputRef}
                 type="text" 
@@ -323,22 +323,22 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 autoFocus
-                className="w-full pl-10 pr-9 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 text-sm outline-none transition font-medium text-gray-800"
+                className="w-full pl-10 pr-9 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 text-xs outline-none transition font-medium text-gray-800"
               />
               {search && (
-                <button onClick={() => setSearch('')} className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
-                  <X size={16} />
+                <button onClick={() => setSearch('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                  <X size={15} />
                 </button>
               )}
             </div>
 
             {/* Customer Select */}
             <div className="relative">
-              <UserCheck className="absolute left-3.5 top-3 text-gray-400 w-4 h-4 pointer-events-none" />
+              <UserCheck className="absolute left-3.5 top-2.5 text-gray-400 w-4 h-4 pointer-events-none" />
               <select
                 value={selectedCustomer}
                 onChange={(e) => setSelectedCustomer(e.target.value)}
-                className="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 text-sm text-gray-700 outline-none font-bold appearance-none cursor-pointer"
+                className="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 text-xs text-gray-700 outline-none font-bold appearance-none cursor-pointer"
               >
                 <option value="">Pelanggan Umum</option>
                 {initialCustomers.map(c => (
@@ -349,16 +349,16 @@ export default function PosClient({ initialProducts, initialCategories, initialC
           </div>
 
           {/* Pure SVG Lucide Category Filter Bar */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
             <button
               onClick={() => setSelectedCategory('ALL')}
-              className={`px-4 py-2 rounded-2xl text-xs font-black transition shrink-0 flex items-center gap-2 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition shrink-0 flex items-center gap-1.5 ${
                 selectedCategory === 'ALL'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              <Layers size={15} />
+              <Layers size={14} />
               <span>Semua Produk ({initialProducts.length})</span>
             </button>
 
@@ -366,13 +366,13 @@ export default function PosClient({ initialProducts, initialCategories, initialC
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-4 py-2 rounded-2xl text-xs font-black transition shrink-0 flex items-center gap-2 ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition shrink-0 flex items-center gap-1.5 ${
                   selectedCategory === cat.id
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                <CategorySvgIcon name={cat.name} size={15} />
+                <CategorySvgIcon name={cat.name} size={14} />
                 <span>{cat.name}</span>
               </button>
             ))}
@@ -380,7 +380,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
         </div>
 
         {/* Product Grid */}
-        <div className="flex-1 p-3.5 overflow-y-auto bg-gray-50/50">
+        <div className="flex-1 p-3 overflow-y-auto bg-gray-50/50">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
             {filteredProducts.map(product => {
               const inCart = cart.find(i => i.id === product.id)
@@ -391,14 +391,14 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 <div 
                   key={product.id}
                   onClick={() => addToCart(product)}
-                  className={`relative border rounded-2xl p-2.5 cursor-pointer transition-all flex flex-col justify-between group ${
+                  className={`relative border rounded-xl p-2.5 cursor-pointer transition-all flex flex-col justify-between group ${
                     isOutOfStock 
                       ? 'bg-gray-100 border-gray-200 opacity-45 cursor-not-allowed' 
-                      : 'bg-white border-gray-200/90 hover:border-blue-500 hover:shadow-lg hover:-translate-y-0.5'
+                      : 'bg-white border-gray-200/90 hover:border-blue-500 hover:shadow-md hover:-translate-y-0.5'
                   }`}
                 >
                   {/* Thumbnail Container */}
-                  <div className="relative w-full h-24 rounded-xl overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center text-blue-500 border border-blue-100/50 shrink-0">
+                  <div className="relative w-full h-24 rounded-lg overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center text-blue-500 border border-blue-100/50 shrink-0">
                     {product.imageUrl ? (
                       <img 
                         src={product.imageUrl} 
@@ -407,14 +407,14 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center gap-0.5 group-hover:scale-110 transition-transform duration-300">
-                        <CategorySvgIcon name={product.category} size={32} />
+                        <CategorySvgIcon name={product.category} size={30} />
                         <span className="text-[8px] font-black uppercase tracking-widest opacity-40">{product.unit || 'PRODUK'}</span>
                       </div>
                     )}
 
                     {/* Quantity In Cart Counter */}
                     {inCart && (
-                      <div className="absolute top-2 right-2 bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md animate-pulse flex items-center gap-1">
+                      <div className="absolute top-1.5 right-1.5 bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md animate-pulse flex items-center gap-1">
                         <ShoppingCart size={10} />
                         {inCart.quantity}x
                       </div>
@@ -422,13 +422,13 @@ export default function PosClient({ initialProducts, initialCategories, initialC
 
                     {/* Stock Warning Badge */}
                     {isLowStock && !isOutOfStock && (
-                      <span className="absolute top-2 left-2 bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.2 rounded-full shadow-xs uppercase">
+                      <span className="absolute top-1.5 left-1.5 bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.2 rounded-md shadow-xs uppercase">
                         Stok Sedikit
                       </span>
                     )}
 
                     {isOutOfStock && (
-                      <span className="absolute top-2 left-2 bg-red-600 text-white text-[8px] font-black px-1.5 py-0.2 rounded-full shadow-xs uppercase">
+                      <span className="absolute top-1.5 left-1.5 bg-red-600 text-white text-[8px] font-black px-1.5 py-0.2 rounded-md shadow-xs uppercase">
                         Habis
                       </span>
                     )}
@@ -484,12 +484,12 @@ export default function PosClient({ initialProducts, initialCategories, initialC
       </div>
 
       {/* Kanan: Ringkasan Pesanan & Pembayaran */}
-      <div className="w-full lg:w-[380px] xl:w-[400px] flex flex-col bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden shrink-0">
+      <div className="w-full lg:w-[370px] xl:w-[390px] flex flex-col bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden shrink-0">
         {/* Header Keranjang */}
         <div className="px-3.5 py-2.5 bg-gray-50/90 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-100/80 text-blue-600 rounded-xl">
-              <ShoppingCart size={16} />
+            <div className="p-1 bg-blue-100/80 text-blue-600 rounded-lg">
+              <ShoppingCart size={15} />
             </div>
             <h2 className="font-black text-gray-900 text-sm tracking-tight">Keranjang</h2>
             {cart.length > 0 && (
@@ -503,10 +503,10 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             {heldOrders.length > 0 && (
               <select 
                 onChange={(e) => handleLoadOrder(e.target.value)}
-                className="text-[11px] border border-amber-300 bg-amber-50 font-extrabold text-amber-800 rounded-xl px-2 py-1 outline-none shadow-2xs"
+                className="text-[11px] border border-amber-300 bg-amber-50 font-extrabold text-amber-800 rounded-lg px-2 py-1 outline-none shadow-2xs"
                 value=""
               >
-                <option value="" disabled>Panggil Hold ({heldOrders.length})</option>
+                <option value="" disabled>Hold ({heldOrders.length})</option>
                 {heldOrders.map(o => <option key={o.id} value={o.id}>{o.id}</option>)}
               </select>
             )}
@@ -514,7 +514,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             <button 
               onClick={handleHoldOrder}
               disabled={cart.length === 0}
-              className="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 font-bold px-2.5 py-1 rounded-xl disabled:opacity-40 transition shadow-2xs flex items-center gap-1"
+              className="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 font-bold px-2 py-1 rounded-lg disabled:opacity-40 transition shadow-2xs flex items-center gap-1"
               title="Tahan Pesanan (Hold)"
             >
               <Clock size={12} />
@@ -524,10 +524,10 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             <button 
               onClick={() => { setCart([]); setAmountPaid(''); }}
               disabled={cart.length === 0}
-              className="p-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/80 rounded-xl disabled:opacity-40 transition shadow-2xs"
+              className="p-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/80 rounded-lg disabled:opacity-40 transition shadow-2xs"
               title="Kosongkan Keranjang"
             >
-              <Trash2 size={14} />
+              <Trash2 size={13} />
             </button>
           </div>
         </div>
@@ -542,7 +542,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             <button
               key={item.type}
               onClick={() => setOrderType(item.type as any)}
-              className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold transition ${
+              className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition ${
                 orderType === item.type 
                   ? 'bg-white text-blue-600 shadow-xs border border-gray-200 font-black' 
                   : 'text-gray-500 hover:text-gray-800'
@@ -555,7 +555,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
         </div>
 
         {/* Cart Item List */}
-        <div className="flex-1 overflow-y-auto min-h-[120px] p-3 bg-gray-50/50 space-y-2">
+        <div className="flex-1 overflow-y-auto min-h-[120px] p-2.5 bg-gray-50/50 space-y-1.5">
           {cart.length === 0 ? (
             <div className="h-28 flex flex-col items-center justify-center text-gray-400 space-y-1">
               <ShoppingCart size={32} className="opacity-25" />
@@ -564,21 +564,30 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             </div>
           ) : (
             cart.map(item => (
-              <div key={item.id} className="bg-white p-2.5 rounded-2xl border border-gray-200/80 shadow-2xs flex items-center justify-between gap-2">
+              <div key={item.id} className="bg-white p-2 rounded-xl border border-gray-200/80 shadow-2xs flex items-center justify-between gap-2">
+                {/* Cart Item Thumbnail (Image or SVG Category Icon) */}
+                <div className="w-9 h-9 rounded-lg overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center text-blue-600 shrink-0 border border-blue-100/60 shadow-2xs">
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <CategorySvgIcon name={item.category} size={18} />
+                  )}
+                </div>
+
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-extrabold text-gray-900 text-xs truncate">{item.name}</h4>
+                  <h4 className="font-extrabold text-gray-900 text-xs truncate leading-tight">{item.name}</h4>
                   <div className="text-blue-600 font-black text-[11px] mt-0.5">
                     {formatRupiah(item.price)} x {item.quantity} = <span className="text-gray-900 font-extrabold">{formatRupiah(item.price * item.quantity)}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  <div className="flex items-center bg-gray-100 rounded-xl p-0.5 border border-gray-200">
-                    <button onClick={() => updateQuantity(item.id, -1)} className="p-1 hover:bg-white rounded-lg text-gray-600 transition"><Minus size={12} /></button>
-                    <span className="w-6 text-center text-xs font-black text-gray-800">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, 1)} className="p-1 hover:bg-white rounded-lg text-gray-600 transition"><Plus size={12} /></button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                    <button onClick={() => updateQuantity(item.id, -1)} className="p-1 hover:bg-white rounded-md text-gray-600 transition"><Minus size={11} /></button>
+                    <span className="w-5 text-center text-xs font-black text-gray-800">{item.quantity}</span>
+                    <button onClick={() => updateQuantity(item.id, 1)} className="p-1 hover:bg-white rounded-md text-gray-600 transition"><Plus size={11} /></button>
                   </div>
-                  <button onClick={() => removeFromCart(item.id)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
+                  <button onClick={() => removeFromCart(item.id)} className="text-red-400 hover:text-red-600 p-1 transition"><Trash2 size={13} /></button>
                 </div>
               </div>
             ))
@@ -586,7 +595,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
         </div>
 
         {/* Payment & Checkout Section - Sticky Bottom */}
-        <div className="mt-auto bg-white p-3 border-t border-gray-200 space-y-2.5 shrink-0 sticky bottom-0 z-10 shadow-lg">
+        <div className="mt-auto bg-white p-3 border-t border-gray-200 space-y-2 shrink-0 sticky bottom-0 z-10 shadow-md">
           {/* Note Input */}
           <div className="relative">
             <FileText className="absolute left-3 top-2.5 text-gray-400 w-3.5 h-3.5" />
@@ -595,7 +604,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
               value={orderNote}
               onChange={e => setOrderNote(e.target.value)}
               placeholder="Catatan pesanan / No. Meja (opsional)..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 font-medium"
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 font-medium"
             />
           </div>
 
@@ -616,7 +625,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
           </div>
 
           {/* Grand Total */}
-          <div className="flex justify-between items-center border-t border-gray-200 pt-2">
+          <div className="flex justify-between items-center border-t border-gray-200 pt-1.5">
             <span className="text-xs font-black text-gray-900 uppercase tracking-wider">TOTAL TAGIHAN</span>
             <span className="text-blue-600 text-xl font-black">{formatRupiah(total)}</span>
           </div>
@@ -634,13 +643,13 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 <button
                   key={pm.method}
                   onClick={() => setPaymentMethod(pm.method as any)}
-                  className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-extrabold transition border ${
+                  className={`flex flex-col items-center justify-center py-1.5 rounded-lg text-[11px] font-extrabold transition border ${
                     paymentMethod === pm.method
                       ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                       : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
                   }`}
                 >
-                  <pm.icon size={14} className="mb-0.5" />
+                  <pm.icon size={13} className="mb-0.5" />
                   <span>{pm.label}</span>
                 </button>
               ))}
@@ -649,7 +658,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
 
           {/* Smart Quick Cash Buttons for CASH */}
           {paymentMethod === 'CASH' && (
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <div className="flex justify-between text-[11px] font-bold text-gray-600">
                 <span>Uang Diterima (CASH)</span>
                 {Number(amountPaid) >= total && (
@@ -661,7 +670,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 value={amountPaid}
                 onChange={(e) => setAmountPaid(e.target.value)}
                 placeholder="Masukkan nominal..."
-                className="w-full px-3 py-1.5 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-black text-base text-gray-900"
+                className="w-full px-3 py-1.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-black text-base text-gray-900"
               />
 
               {/* Dynamic Smart Quick Cash Options */}
@@ -670,7 +679,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                   <button 
                     key={opt + idx}
                     onClick={() => setAmountPaid(opt.toString())} 
-                    className="py-1.5 bg-gray-50 hover:bg-blue-50 border border-gray-200 rounded-lg text-[10px] font-black text-gray-800 transition truncate"
+                    className="py-1 bg-gray-50 hover:bg-blue-50 border border-gray-200 rounded-md text-[10px] font-black text-gray-800 transition truncate"
                   >
                     {opt === total ? 'Uang Pas' : `${(opt / 1000).toLocaleString('id-ID')}k`}
                   </button>
@@ -680,7 +689,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
           )}
 
           {error && (
-            <div className="flex items-center gap-2 text-[11px] text-red-600 bg-red-50 p-2 rounded-xl border border-red-100 font-bold">
+            <div className="flex items-center gap-2 text-[11px] text-red-600 bg-red-50 p-2 rounded-lg border border-red-100 font-bold">
               <AlertCircle size={14} className="shrink-0 text-red-500" />
               <span>{error}</span>
             </div>
@@ -690,7 +699,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
           <button 
             disabled={cart.length === 0 || isProcessing || (paymentMethod === 'CASH' && !amountPaid)}
             onClick={handleCheckout}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-extrabold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2 text-sm"
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-extrabold py-2.5 rounded-lg transition shadow-md flex items-center justify-center gap-2 text-sm"
           >
             {isProcessing ? 'Memproses Transaksi...' : `Bayar Sekarang · ${formatRupiah(total)}`}
           </button>
