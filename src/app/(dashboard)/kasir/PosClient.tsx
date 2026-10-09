@@ -486,13 +486,15 @@ export default function PosClient({ initialProducts, initialCategories, initialC
       {/* Kanan: Ringkasan Pesanan & Pembayaran */}
       <div className="w-full lg:w-[380px] xl:w-[400px] flex flex-col bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden shrink-0">
         {/* Header Keranjang */}
-        <div className="p-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+        <div className="px-3.5 py-2.5 bg-gray-50/90 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ShoppingCart className="w-4 h-4 text-blue-600" />
-            <h2 className="font-extrabold text-gray-900 text-sm">Keranjang Pesanan</h2>
+            <div className="p-1.5 bg-blue-100/80 text-blue-600 rounded-xl">
+              <ShoppingCart size={16} />
+            </div>
+            <h2 className="font-black text-gray-900 text-sm tracking-tight">Keranjang</h2>
             {cart.length > 0 && (
-              <span className="bg-blue-600 text-white text-[11px] font-black px-2 py-0.2 rounded-full">
-                {cart.reduce((a, b) => a + b.quantity, 0)}
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-extrabold px-2.5 py-0.5 rounded-full shadow-xs">
+                {cart.reduce((a, b) => a + b.quantity, 0)} Item
               </span>
             )}
           </div>
@@ -501,7 +503,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             {heldOrders.length > 0 && (
               <select 
                 onChange={(e) => handleLoadOrder(e.target.value)}
-                className="text-[11px] border border-orange-300 bg-orange-50 font-bold text-orange-700 rounded-xl px-2 py-1 outline-none"
+                className="text-[11px] border border-amber-300 bg-amber-50 font-extrabold text-amber-800 rounded-xl px-2 py-1 outline-none shadow-2xs"
                 value=""
               >
                 <option value="" disabled>Panggil Hold ({heldOrders.length})</option>
@@ -512,16 +514,17 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             <button 
               onClick={handleHoldOrder}
               disabled={cart.length === 0}
-              className="text-[11px] bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold px-2.5 py-1 rounded-xl disabled:opacity-40 transition"
+              className="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 font-bold px-2.5 py-1 rounded-xl disabled:opacity-40 transition shadow-2xs flex items-center gap-1"
               title="Tahan Pesanan (Hold)"
             >
-              Hold
+              <Clock size={12} />
+              <span>Hold</span>
             </button>
 
             <button 
               onClick={() => { setCart([]); setAmountPaid(''); }}
               disabled={cart.length === 0}
-              className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl disabled:opacity-40 transition"
+              className="p-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/80 rounded-xl disabled:opacity-40 transition shadow-2xs"
               title="Kosongkan Keranjang"
             >
               <Trash2 size={14} />
@@ -552,7 +555,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
         </div>
 
         {/* Cart Item List */}
-        <div className="max-h-[160px] xl:max-h-[200px] overflow-y-auto p-3 bg-gray-50/50 space-y-2">
+        <div className="flex-1 overflow-y-auto min-h-[120px] p-3 bg-gray-50/50 space-y-2">
           {cart.length === 0 ? (
             <div className="h-28 flex flex-col items-center justify-center text-gray-400 space-y-1">
               <ShoppingCart size={32} className="opacity-25" />
@@ -582,8 +585,8 @@ export default function PosClient({ initialProducts, initialCategories, initialC
           )}
         </div>
 
-        {/* Payment & Checkout Section */}
-        <div className="bg-white p-3 border-t border-gray-200 space-y-2.5">
+        {/* Payment & Checkout Section - Sticky Bottom */}
+        <div className="mt-auto bg-white p-3 border-t border-gray-200 space-y-2.5 shrink-0 sticky bottom-0 z-10 shadow-lg">
           {/* Note Input */}
           <div className="relative">
             <FileText className="absolute left-3 top-2.5 text-gray-400 w-3.5 h-3.5" />
