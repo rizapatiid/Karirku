@@ -2,10 +2,25 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { Users2, LayoutDashboard, ShoppingCart, Package, Users, Settings, FileText, ArrowRightLeft, ShieldCheck, Wallet, ClipboardList, HelpCircle } from 'lucide-react'
+
+const ICON_MAP: Record<string, any> = {
+  LayoutDashboard,
+  ShoppingCart,
+  FileText,
+  ClipboardList,
+  Users2,
+  Users,
+  Package,
+  ArrowRightLeft,
+  Wallet,
+  ShieldCheck,
+  Settings,
+}
 
 interface MenuItem {
   href: string
-  icon: any
+  iconName: string
   label: string
 }
 
@@ -29,7 +44,7 @@ export default function SidebarNav({ groups }: { groups: Group[] }) {
           <div className="space-y-0.5">
             {group.items.map(item => {
               const isActive = pathname === item.href || (item.href !== '/owner' && item.href !== '/admin' && item.href !== '/kasir' && pathname.startsWith(item.href))
-              const Icon = item.icon
+              const Icon = ICON_MAP[item.iconName] || HelpCircle
 
               return (
                 <Link

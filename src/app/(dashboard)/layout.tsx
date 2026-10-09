@@ -3,7 +3,7 @@ import { getSession } from '@/actions/auth'
 import LogoutButton from './LogoutButton'
 import SidebarNav from './SidebarNav'
 import { redirect } from 'next/navigation'
-import { Users2, LayoutDashboard, ShoppingCart, Package, Users, Settings, FileText, ArrowRightLeft, ShieldCheck, Wallet, ClipboardList, Store as StoreIcon } from 'lucide-react'
+import { Store as StoreIcon } from 'lucide-react'
 
 export default async function DashboardLayout({
   children,
@@ -24,41 +24,41 @@ export default async function DashboardLayout({
     {
       group: 'Utama',
       items: [
-        { href: dashboardHref, icon: LayoutDashboard, label: dashboardLabel, roles: ['OWNER', 'ADMIN', 'KASIR'] },
+        { href: dashboardHref, iconName: 'LayoutDashboard', label: dashboardLabel, roles: ['OWNER', 'ADMIN', 'KASIR'] },
       ]
     },
     {
       group: 'Transaksi',
       items: [
-        { href: '/kasir',    icon: ShoppingCart,   label: 'Buka POS Kasir',      roles: ['OWNER', 'KASIR'] },
-        { href: '/sales',    icon: FileText,        label: 'Riwayat Penjualan',   roles: ['OWNER', 'ADMIN'] },
-        { href: '/sales',    icon: ClipboardList,   label: 'Transaksi Saya',      roles: ['KASIR'] },
-        { href: '/queue',    icon: Users2,          label: 'Antrian Pelanggan',   roles: ['OWNER', 'ADMIN', 'KASIR'] },
-        { href: '/customers',icon: Users,           label: 'Pelanggan',           roles: ['OWNER', 'KASIR'] },
+        { href: '/kasir',    iconName: 'ShoppingCart',   label: 'Buka POS Kasir',      roles: ['OWNER', 'KASIR'] },
+        { href: '/sales',    iconName: 'FileText',        label: 'Riwayat Penjualan',   roles: ['OWNER', 'ADMIN'] },
+        { href: '/sales',    iconName: 'ClipboardList',   label: 'Transaksi Saya',      roles: ['KASIR'] },
+        { href: '/queue',    iconName: 'Users2',          label: 'Antrian Pelanggan',   roles: ['OWNER', 'ADMIN', 'KASIR'] },
+        { href: '/customers',iconName: 'Users',           label: 'Pelanggan',           roles: ['OWNER', 'KASIR'] },
       ]
     },
     {
       group: 'Inventaris',
       items: [
-        { href: '/products',  icon: Package,        label: 'Produk',              roles: ['OWNER', 'ADMIN'] },
-        { href: '/stock',     icon: ArrowRightLeft,  label: 'Pergerakan Stok',    roles: ['OWNER', 'ADMIN'] },
-        { href: '/purchases', icon: Package,         label: 'Pembelian',          roles: ['OWNER', 'ADMIN'] },
-        { href: '/suppliers', icon: Users,           label: 'Supplier',           roles: ['OWNER', 'ADMIN'] },
+        { href: '/products',  iconName: 'Package',        label: 'Produk',              roles: ['OWNER', 'ADMIN'] },
+        { href: '/stock',     iconName: 'ArrowRightLeft',  label: 'Pergerakan Stok',    roles: ['OWNER', 'ADMIN'] },
+        { href: '/purchases', iconName: 'Package',         label: 'Pembelian',          roles: ['OWNER', 'ADMIN'] },
+        { href: '/suppliers', iconName: 'Users',           label: 'Supplier',           roles: ['OWNER', 'ADMIN'] },
       ]
     },
     {
       group: 'Keuangan & Laporan',
       items: [
-        { href: '/finance',   icon: Wallet,         label: 'Keuangan',           roles: ['OWNER'] },
-        { href: '/reports',   icon: FileText,       label: 'Laporan',            roles: ['OWNER'] },
+        { href: '/finance',   iconName: 'Wallet',         label: 'Keuangan',           roles: ['OWNER'] },
+        { href: '/reports',   iconName: 'FileText',       label: 'Laporan',            roles: ['OWNER'] },
       ]
     },
     {
       group: 'Sistem',
       items: [
-        { href: '/audit-logs',icon: ShieldCheck,    label: 'Audit Log',          roles: ['OWNER'] },
-        { href: '/users',     icon: Users,          label: 'Pengguna (Role)',     roles: ['OWNER'] },
-        { href: '/settings',  icon: Settings,       label: 'Pengaturan Pro',     roles: ['OWNER'] },
+        { href: '/audit-logs',iconName: 'ShieldCheck',    label: 'Audit Log',          roles: ['OWNER'] },
+        { href: '/users',     iconName: 'Users',          label: 'Pengguna (Role)',     roles: ['OWNER'] },
+        { href: '/settings',  iconName: 'Settings',       label: 'Pengaturan Pro',     roles: ['OWNER'] },
       ]
     },
   ]
