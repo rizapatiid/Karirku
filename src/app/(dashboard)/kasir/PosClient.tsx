@@ -283,45 +283,46 @@ export default function PosClient({ initialProducts, initialCategories, initialC
 
   if (checkoutSuccess) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[520px] bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/20 rounded-3xl shadow-xl border border-gray-200 p-8 backdrop-blur-sm">
-        <div className="w-24 h-24 bg-green-100/80 rounded-full flex items-center justify-center mb-5 shadow-inner">
-          <CheckCircle2 className="w-14 h-14 text-green-600 animate-bounce" />
-        </div>
-        
-        <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-1">Pembayaran Berhasil!</h2>
-        <p className="text-gray-500 text-sm mb-4">Transaksi telah tersimpan dalam sistem database</p>
-        
-        {checkoutSuccess.queueNumber && (
-          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white rounded-3xl px-12 py-6 my-4 text-center shadow-xl transform hover:scale-105 transition-transform duration-300">
-            <div className="flex items-center justify-center gap-2 text-xs font-bold text-blue-200 uppercase tracking-widest mb-1">
-              <Zap size={14} /> NOMOR ANTREAN PELANGGAN
-            </div>
-            <span className="text-6xl font-black tracking-tight font-mono">
-              #{String(checkoutSuccess.queueNumber).padStart(3, '0')}
-            </span>
+      <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-[500px]">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-200/90 p-8 text-center flex flex-col items-center">
+          <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4 border border-emerald-100 shadow-2xs">
+            <CheckCircle2 className="w-9 h-9" />
           </div>
-        )}
+          
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Pembayaran Berhasil!</h2>
+          <p className="text-gray-500 text-xs mt-1">Transaksi tersimpan di sistem database</p>
+          
+          {checkoutSuccess.queueNumber && (
+            <div className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl p-5 my-5 shadow-md text-center">
+              <div className="flex items-center justify-center gap-1.5 text-[10px] font-black text-blue-200 uppercase tracking-widest">
+                <Zap size={12} /> NOMOR ANTREAN
+              </div>
+              <div className="text-5xl font-black tracking-tight font-mono mt-1">
+                #{String(checkoutSuccess.queueNumber).padStart(3, '0')}
+              </div>
+            </div>
+          )}
 
-        <div className="flex items-center gap-2 text-gray-600 text-sm mb-6 bg-white px-4 py-2 rounded-2xl border border-gray-200 shadow-2xs">
-          <Receipt size={16} className="text-blue-600" />
-          <span>No. Struk Invoice:</span>
-          <span className="font-mono font-bold text-gray-900">{checkoutSuccess.invoice}</span>
-        </div>
-        
-        <div className="flex gap-4">
-          <button 
-            onClick={() => handleDirectPrint(checkoutSuccess.id)}
-            className="px-8 py-3.5 bg-gray-900 hover:bg-black text-white text-sm rounded-2xl font-bold transition shadow-lg flex items-center gap-2.5 cursor-pointer"
-          >
-            <Printer size={18} /> Cetak Struk Belanja
-          </button>
-          <button 
-            onClick={() => setCheckoutSuccess(null)}
-            className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm rounded-2xl font-bold transition shadow-lg flex items-center gap-2"
-          >
-            <span>+ Transaksi Baru</span>
-            <ArrowRight size={16} />
-          </button>
+          <div className="inline-flex items-center gap-2 bg-gray-50 text-gray-600 px-3.5 py-1.5 rounded-xl border border-gray-200 text-xs font-semibold mb-6">
+            <Receipt size={14} className="text-blue-600" />
+            <span>No. Invoice: <strong className="font-mono text-gray-900">{checkoutSuccess.invoice}</strong></span>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3 w-full">
+            <button 
+              onClick={() => handleDirectPrint(checkoutSuccess.id)}
+              className="py-3 px-4 bg-gray-900 hover:bg-black text-white text-xs rounded-xl font-bold transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Printer size={16} /> Cetak Struk
+            </button>
+            <button 
+              onClick={() => setCheckoutSuccess(null)}
+              className="py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-xl font-bold transition shadow-sm flex items-center justify-center gap-2"
+            >
+              <span>+ Transaksi Baru</span>
+              <ArrowRight size={15} />
+            </button>
+          </div>
         </div>
       </div>
     )
