@@ -281,52 +281,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
     setIsProcessing(false)
   }
 
-  if (checkoutSuccess) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-[500px]">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-200/90 p-8 text-center flex flex-col items-center">
-          <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4 border border-emerald-100 shadow-2xs">
-            <CheckCircle2 className="w-9 h-9" />
-          </div>
-          
-          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Pembayaran Berhasil!</h2>
-          <p className="text-gray-500 text-xs mt-1">Transaksi tersimpan di sistem database</p>
-          
-          {checkoutSuccess.queueNumber && (
-            <div className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl p-5 my-5 shadow-md text-center">
-              <div className="flex items-center justify-center gap-1.5 text-[10px] font-black text-blue-200 uppercase tracking-widest">
-                <Zap size={12} /> NOMOR ANTREAN
-              </div>
-              <div className="text-5xl font-black tracking-tight font-mono mt-1">
-                #{String(checkoutSuccess.queueNumber).padStart(3, '0')}
-              </div>
-            </div>
-          )}
 
-          <div className="inline-flex items-center gap-2 bg-gray-50 text-gray-600 px-3.5 py-1.5 rounded-xl border border-gray-200 text-xs font-semibold mb-6">
-            <Receipt size={14} className="text-blue-600" />
-            <span>No. Invoice: <strong className="font-mono text-gray-900">{checkoutSuccess.invoice}</strong></span>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3 w-full">
-            <button 
-              onClick={() => handleDirectPrint(checkoutSuccess.id)}
-              className="py-3 px-4 bg-gray-900 hover:bg-black text-white text-xs rounded-xl font-bold transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Printer size={16} /> Cetak Struk
-            </button>
-            <button 
-              onClick={() => setCheckoutSuccess(null)}
-              className="py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-xl font-bold transition shadow-sm flex items-center justify-center gap-2"
-            >
-              <span>+ Transaksi Baru</span>
-              <ArrowRight size={15} />
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col lg:flex-row gap-5 h-full min-h-[calc(100vh-7.5rem)]">
@@ -765,6 +720,56 @@ export default function PosClient({ initialProducts, initialCategories, initialC
           </button>
         </div>
       </div>
+
+      {/* Checkout Success Liquid Glass Popup Modal Overlay */}
+      {checkoutSuccess && (
+        <div className="fixed inset-0 bg-slate-950/45 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="relative w-full max-w-md bg-white/85 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3),0_0_20px_0_rgba(255,255,255,0.6)_inset] border border-white/80 p-8 text-center flex flex-col items-center overflow-hidden transform animate-in zoom-in-95 duration-200">
+            {/* Top Glossy Liquid Reflection Highlight */}
+            <div className="absolute -top-24 -left-24 w-52 h-52 bg-gradient-to-br from-white/90 via-white/30 to-transparent rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-20 -right-20 w-44 h-44 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="relative w-16 h-16 bg-emerald-500/10 text-emerald-600 rounded-full flex items-center justify-center mb-4 border border-emerald-400/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+              <CheckCircle2 className="w-9 h-9" />
+            </div>
+            
+            <h2 className="relative text-2xl font-black text-gray-900 tracking-tight">Pembayaran Berhasil!</h2>
+            <p className="relative text-gray-500 text-xs mt-1 font-medium">Transaksi tersimpan di sistem database</p>
+            
+            {checkoutSuccess.queueNumber && (
+              <div className="relative w-full bg-gradient-to-r from-blue-600/90 to-indigo-600/90 backdrop-blur-md text-white rounded-2xl p-5 my-5 shadow-lg shadow-blue-500/25 border border-white/20 text-center overflow-hidden">
+                <div className="flex items-center justify-center gap-1.5 text-[10px] font-black text-blue-100 uppercase tracking-widest">
+                  <Zap size={12} /> NOMOR ANTREAN
+                </div>
+                <div className="text-5xl font-black tracking-tight font-mono mt-1 drop-shadow-sm">
+                  #{String(checkoutSuccess.queueNumber).padStart(3, '0')}
+                </div>
+              </div>
+            )}
+
+            <div className="relative inline-flex items-center gap-2 bg-white/70 backdrop-blur-xs text-gray-700 px-4 py-2 rounded-xl border border-white/80 text-xs font-semibold mb-6 shadow-xs">
+              <Receipt size={14} className="text-blue-600" />
+              <span>No. Invoice: <strong className="font-mono text-gray-900">{checkoutSuccess.invoice}</strong></span>
+            </div>
+            
+            <div className="relative grid grid-cols-2 gap-3 w-full">
+              <button 
+                onClick={() => handleDirectPrint(checkoutSuccess.id)}
+                className="py-3 px-4 bg-slate-900/90 hover:bg-slate-950 text-white text-xs rounded-xl font-bold transition shadow-md flex items-center justify-center gap-2 cursor-pointer border border-slate-700/50 backdrop-blur-xs"
+              >
+                <Printer size={16} /> Cetak Struk
+              </button>
+              <button 
+                onClick={() => setCheckoutSuccess(null)}
+                className="py-3 px-4 bg-blue-600/90 hover:bg-blue-600 text-white text-xs rounded-xl font-bold transition shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer border border-blue-400/40 backdrop-blur-xs"
+              >
+                <span>+ Transaksi Baru</span>
+                <ArrowRight size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
