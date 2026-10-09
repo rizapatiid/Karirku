@@ -30,12 +30,13 @@ export async function processCheckout(data: CheckoutData) {
     if (!session) throw new Error('Anda harus login')
     const user = { id: session.userId }
     
-    // Default customer if none selected
-    let customerId = data.customerId
-    if (!customerId) {
-      const defaultCust = await prisma.customer.findFirst({ where: { code: 'CUST-0000' } })
-      customerId = defaultCust?.id
-    }
+    // Default customer & Store pre-fetch outside transaction
+    const [defaultCust, store] = await Promise.all([
+      !data.customerId ? prisma.customer.findFirst({ where: { code: 'CUST-0000' } }) : null,
+      prisma.store.findFirst()
+    ])
+
+    const customerId = data.customerId || defaultCust?.id
 
     // Calculate totals on server to prevent tampering
     let subtotal = 0
@@ -76,12 +77,17 @@ export async function processCheckout(data: CheckoutData) {
 
     const changeAmount = data.amountPaid > total ? data.amountPaid - total : 0
 
-    // TRANSACTION BLOCK (ACID)
-    const result = await prisma.$transaction(async (tx) => {
-      const now = new Date()
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
-      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+    // Date range preparation for queries
+    const now = new Date()
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const dateStr = `${year}${month}${day}`
 
+    // TRANSACTION BLOCK (ACID) with extended 30s timeout for remote Hostinger DB latency
+    const result = await prisma.$transaction(async (tx) => {
       // 1. Calculate today's Queue Number
       const lastQueueToday = await tx.queue.findFirst({
         where: {
@@ -91,12 +97,7 @@ export async function processCheckout(data: CheckoutData) {
       })
       const queueNumber = (lastQueueToday?.number || 0) + 1
 
-      // 2. Generate Invoice Number inside transaction
-      const year = now.getFullYear()
-      const month = String(now.getMonth() + 1).padStart(2, '0')
-      const day = String(now.getDate()).padStart(2, '0')
-      const dateStr = `${year}${month}${day}`
-
+      // 2. Generate Invoice Number
       const lastSaleToday = await tx.sale.findFirst({
         where: {
           createdAt: { gte: startOfDay, lte: endOfDay }
@@ -113,7 +114,6 @@ export async function processCheckout(data: CheckoutData) {
         }
       }
 
-      // Double check count to be extra safe
       const totalToday = await tx.sale.count({
         where: { createdAt: { gte: startOfDay, lte: endOfDay } }
       })
@@ -122,9 +122,6 @@ export async function processCheckout(data: CheckoutData) {
       }
 
       const invoiceNumber = `TRX-${dateStr}-${String(nextSeq).padStart(5, '0')}`
-
-      // Get store if available
-      const store = await tx.store.findFirst()
 
       // 3. Create Sale
       const sale = await tx.sale.create({
@@ -219,6 +216,9 @@ export async function processCheckout(data: CheckoutData) {
       })
 
       return sale
+    }, {
+      timeout: 30000, // 30 seconds timeout to handle remote Hostinger DB latency
+      maxWait: 10000   // 10 seconds max wait to acquire transaction connection
     })
 
     revalidatePath('/products')
