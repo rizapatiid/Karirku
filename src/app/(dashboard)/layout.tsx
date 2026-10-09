@@ -1,8 +1,9 @@
-import Link from 'next/link'
-import { Users2, LayoutDashboard, ShoppingCart, Package, Users, Settings, FileText, ArrowRightLeft, ShieldCheck, Wallet, ClipboardList } from 'lucide-react'
+import prisma from '@/lib/prisma'
 import { getSession } from '@/actions/auth'
 import LogoutButton from './LogoutButton'
+import SidebarNav from './SidebarNav'
 import { redirect } from 'next/navigation'
+import { Users2, LayoutDashboard, ShoppingCart, Package, Users, Settings, FileText, ArrowRightLeft, ShieldCheck, Wallet, ClipboardList, Store as StoreIcon } from 'lucide-react'
 
 export default async function DashboardLayout({
   children,
@@ -12,18 +13,14 @@ export default async function DashboardLayout({
   const session = await getSession()
   if (!session) redirect('/login')
 
+  const store = await prisma.store.findFirst()
+
   const role = session.role || 'KASIR'
 
   const dashboardHref = role === 'OWNER' ? '/owner' : (role === 'ADMIN' ? '/admin' : '/kasir')
   const dashboardLabel = role === 'OWNER' ? 'Dasbor Pemilik' : (role === 'ADMIN' ? 'Dasbor Gudang' : 'Mesin Kasir')
 
-  // ─────────────────────────────────────────────────────────────────────
-  // Menu access matrix:
-  //  OWNER   : semua fitur
-  //  ADMIN   : produk, stok, pembelian, supplier, riwayat, antrian
-  //  CASHIER : kasir (POS), transaksi hari ini, pelanggan, antrian
-  // ─────────────────────────────────────────────────────────────────────
-  const menuGroups: { group: string; items: { href: string; icon: any; label: string; roles: string[] }[] }[] = [
+  const menuGroups = [
     {
       group: 'Utama',
       items: [
@@ -66,7 +63,6 @@ export default async function DashboardLayout({
     },
   ]
 
-  // Filter groups and items by role, remove empty groups
   const filteredGroups = menuGroups
     .map(g => ({
       ...g,
@@ -74,11 +70,10 @@ export default async function DashboardLayout({
     }))
     .filter(g => g.items.length > 0)
 
-  // Role badge colors
   const roleBadge: Record<string, string> = {
-    OWNER: 'bg-purple-100 text-purple-700',
-    ADMIN: 'bg-blue-100 text-blue-700',
-    KASIR: 'bg-green-100 text-green-700',
+    OWNER: 'bg-purple-100 text-purple-700 border-purple-200',
+    ADMIN: 'bg-blue-100 text-blue-700 border-blue-200',
+    KASIR: 'bg-green-100 text-green-700 border-green-200',
   }
   const roleLabel: Record<string, string> = {
     OWNER: 'Pemilik',
@@ -90,51 +85,38 @@ export default async function DashboardLayout({
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        {/* Logo */}
-        <div className="h-16 flex items-center justify-center border-b border-gray-200 bg-gradient-to-br from-blue-600 to-blue-700">
-          <h2 className="text-xl font-black tracking-widest text-white">KASIRKU</h2>
+        {/* Header Branding */}
+        <div className="h-16 px-4 flex items-center gap-3 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-sm">
+          {store?.logoUrl ? (
+            <img src={store.logoUrl} alt="Logo" className="w-9 h-9 object-contain bg-white rounded-xl p-0.5 shadow-sm" />
+          ) : (
+            <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-white">
+              <StoreIcon size={20} />
+            </div>
+          )}
+          <div className="min-w-0">
+            <h2 className="text-base font-black tracking-wider leading-tight truncate uppercase">{store?.name || 'KASIRKU'}</h2>
+            <p className="text-[10px] text-blue-100 font-medium tracking-wide">Enterprise POS Pro</p>
+          </div>
         </div>
 
-        {/* User info card */}
-        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+        {/* User Card */}
+        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/80">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow">
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm">
               {session.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-gray-800 truncate leading-tight">{session.name}</p>
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${roleBadge[role] || 'bg-gray-100 text-gray-600'}`}>
+              <p className="text-xs font-bold text-gray-800 truncate leading-tight">{session.name}</p>
+              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full border inline-block mt-0.5 ${roleBadge[role] || 'bg-gray-100 text-gray-600'}`}>
                 {roleLabel[role] || role}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
-          {filteredGroups.map(group => (
-            <div key={group.group}>
-              {/* Group label (hidden for Utama) */}
-              {group.group !== 'Utama' && (
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-3 mb-1">
-                  {group.group}
-                </p>
-              )}
-              <div className="space-y-0.5">
-                {group.items.map(item => (
-                  <Link
-                    key={item.href + item.label}
-                    href={item.href}
-                    className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all group"
-                  >
-                    <item.icon size={18} className="shrink-0 group-hover:scale-110 transition-transform" />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
-        </nav>
+        {/* Client Navigation */}
+        <SidebarNav groups={filteredGroups} />
 
         {/* Logout */}
         <div className="p-3 border-t border-gray-200 bg-gray-50">
@@ -145,14 +127,19 @@ export default async function DashboardLayout({
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm z-10">
-          <h1 className="text-base font-bold text-gray-700 tracking-tight">Sistem POS Pro · KASIRKU</h1>
           <div className="flex items-center gap-2">
-            <span className={`text-xs font-bold px-2 py-1 rounded-full ${roleBadge[role] || 'bg-gray-100 text-gray-600'}`}>
+            <span className="text-sm font-bold text-gray-800 tracking-tight">{store?.name || 'KASIRKU'}</span>
+            <span className="text-gray-300">•</span>
+            <span className="text-xs text-gray-500 font-medium">Sistem POS Profesional</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${roleBadge[role] || 'bg-gray-100 text-gray-600'}`}>
               {roleLabel[role] || role}
             </span>
-            <span className="text-sm font-semibold text-gray-700">{session.name}</span>
+            <span className="text-xs font-bold text-gray-700">{session.name}</span>
           </div>
         </header>
+
         <div className="flex-1 overflow-auto p-6 bg-gray-50">
           {children}
         </div>
@@ -160,4 +147,3 @@ export default async function DashboardLayout({
     </div>
   )
 }
-
