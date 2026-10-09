@@ -381,7 +381,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
 
         {/* Product Grid */}
         <div className="flex-1 p-4 overflow-y-auto bg-gray-50/50">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filteredProducts.map(product => {
               const inCart = cart.find(i => i.id === product.id)
               const isOutOfStock = product.stock <= 0
@@ -391,38 +391,67 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 <div 
                   key={product.id}
                   onClick={() => addToCart(product)}
-                  className={`relative border rounded-3xl p-4 cursor-pointer transition-all flex flex-col justify-between group ${
+                  className={`relative border rounded-3xl p-3 cursor-pointer transition-all flex flex-col justify-between group ${
                     isOutOfStock 
                       ? 'bg-gray-100 border-gray-200 opacity-45 cursor-not-allowed' 
-                      : 'bg-white border-gray-200 hover:border-blue-500 hover:shadow-lg hover:-translate-y-1'
+                      : 'bg-white border-gray-200/90 hover:border-blue-500 hover:shadow-xl hover:-translate-y-1'
                   }`}
                 >
-                  {/* Quantity In Cart Counter */}
-                  {inCart && (
-                    <div className="absolute top-3 right-3 bg-blue-600 text-white text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-md animate-pulse flex items-center gap-1">
-                      <ShoppingCart size={11} />
-                      {inCart.quantity}x
-                    </div>
-                  )}
+                  {/* Thumbnail Container (Real Image or Vibrant SVG Gradient Placeholder) */}
+                  <div className="relative w-full h-32 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center text-blue-500 border border-blue-100/50 shrink-0">
+                    {product.imageUrl ? (
+                      <img 
+                        src={product.imageUrl} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-1 group-hover:scale-110 transition-transform duration-300">
+                        <CategorySvgIcon name={product.category} size={42} />
+                        <span className="text-[9px] font-black uppercase tracking-widest opacity-40">{product.unit || 'PRODUK'}</span>
+                      </div>
+                    )}
 
-                  <div>
-                    <div className="text-[10px] font-bold text-gray-400 tracking-wider uppercase mb-1 flex items-center gap-1">
+                    {/* Quantity In Cart Counter */}
+                    {inCart && (
+                      <div className="absolute top-2.5 right-2.5 bg-blue-600 text-white text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-md animate-pulse flex items-center gap-1">
+                        <ShoppingCart size={11} />
+                        {inCart.quantity}x
+                      </div>
+                    )}
+
+                    {/* Stock Warning Badge */}
+                    {isLowStock && !isOutOfStock && (
+                      <span className="absolute top-2.5 left-2.5 bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs uppercase">
+                        Stok Sedikit
+                      </span>
+                    )}
+
+                    {isOutOfStock && (
+                      <span className="absolute top-2.5 left-2.5 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs uppercase">
+                        Habis
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-3">
+                    <div className="text-[10px] font-bold text-gray-400 tracking-wider uppercase mb-0.5 flex items-center gap-1">
                       <CategorySvgIcon name={product.category} size={11} />
-                      {product.sku}
+                      <span>{product.sku}</span>
                     </div>
-                    <h3 className="font-bold text-gray-800 text-sm line-clamp-2 leading-snug group-hover:text-blue-600 transition">
+                    <h3 className="font-extrabold text-gray-900 text-sm line-clamp-1 leading-snug group-hover:text-blue-600 transition">
                       {product.name}
                     </h3>
                   </div>
 
-                  <div className="mt-4 pt-2.5 border-t border-gray-100 flex items-end justify-between">
+                  <div className="mt-2 pt-2 border-t border-gray-100 flex items-end justify-between">
                     <div>
-                      <div className="text-blue-600 font-black text-base">{formatRupiah(product.price)}</div>
+                      <div className="text-blue-600 font-black text-base leading-tight">{formatRupiah(product.price)}</div>
                       <div className="flex items-center gap-1 mt-0.5">
                         <span className={`text-[10px] font-bold ${
-                          isOutOfStock ? 'text-red-500 font-bold' : isLowStock ? 'text-yellow-600 font-bold' : 'text-gray-400'
+                          isOutOfStock ? 'text-red-500 font-bold' : isLowStock ? 'text-amber-600 font-bold' : 'text-gray-400'
                         }`}>
-                          Stok: {product.stock} {product.unit}
+                          Stok: {product.stock} {product.unit || 'pcs'}
                         </span>
                       </div>
                     </div>
