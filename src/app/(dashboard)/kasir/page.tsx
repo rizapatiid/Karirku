@@ -1,64 +1,99 @@
 import prisma from '@/lib/prisma'
 import PosClient from './PosClient'
 
+// Helper function to retry DB queries when remote Hostinger connection experiences cold start or latency (P1001)
+async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 800): Promise<T> {
+  try {
+    return await fn()
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, delayMs))
+      return withRetry(fn, retries - 1, delayMs * 1.5)
+    }
+    throw error
+  }
+}
+
 export default async function KasirPage() {
-  // Fetch products, categories, customers, and store info
-  const [products, categories, customers, store] = await Promise.all([
-    prisma.product.findMany({
-      where: { status: 'ACTIVE' },
-      include: {
-        category: true,
-        unit: true,
-      },
-      orderBy: { name: 'asc' }
-    }),
-    prisma.category.findMany({
-      orderBy: { name: 'asc' }
-    }),
-    prisma.customer.findMany({
-      where: { status: 'ACTIVE' },
-      orderBy: { name: 'asc' }
-    }),
-    prisma.store.findFirst()
-  ])
+  try {
+    // Fetch products, categories, customers, and store info with automatic retry resilience
+    const [products, categories, customers, store] = await withRetry(() => 
+      Promise.all([
+        prisma.product.findMany({
+          where: { status: 'ACTIVE' },
+          include: {
+            category: true,
+            unit: true,
+          },
+          orderBy: { name: 'asc' }
+        }),
+        prisma.category.findMany({
+          orderBy: { name: 'asc' }
+        }),
+        prisma.customer.findMany({
+          where: { status: 'ACTIVE' },
+          orderBy: { name: 'asc' }
+        }),
+        prisma.store.findFirst()
+      ])
+    )
 
-  // Ensure strict formatting for client components
-  const plainProducts = products.map(p => ({
-    id: p.id,
-    sku: p.sku,
-    name: p.name,
-    stock: p.stock,
-    price: Number(p.sellingPrice),
-    category: p.category.name,
-    categoryId: p.categoryId,
-    unit: p.unit.shortName,
-    imageUrl: p.imageUrl
-  }))
+    // Ensure strict formatting for client components
+    const plainProducts = (products || []).map(p => ({
+      id: p.id,
+      sku: p.sku,
+      name: p.name,
+      stock: p.stock,
+      price: Number(p.sellingPrice),
+      category: p.category.name,
+      categoryId: p.categoryId,
+      unit: p.unit.shortName,
+      imageUrl: p.imageUrl
+    }))
 
-  const plainCategories = categories.map(c => ({
-    id: c.id,
-    name: c.name
-  }))
+    const plainCategories = (categories || []).map(c => ({
+      id: c.id,
+      name: c.name
+    }))
 
-  const plainCustomers = customers.map(c => ({
-    id: c.id,
-    name: c.name,
-    phone: c.phone
-  }))
+    const plainCustomers = (customers || []).map(c => ({
+      id: c.id,
+      name: c.name,
+      phone: c.phone
+    }))
 
-  return (
-    <PosClient
-      initialProducts={plainProducts}
-      initialCategories={plainCategories}
-      initialCustomers={plainCustomers}
-      storeConfig={{
-        name: store?.name || 'KASIRKU POS',
-        taxActive: store?.taxActive || false,
-        taxRate: store?.taxRate || 11,
-        serviceCharge: store?.serviceCharge || 0,
-        receiptFooter: store?.receiptFooter || '',
-        paymentInfo: store?.paymentInfo || ''
-      }}
-    />
-  )
+    return (
+      <PosClient
+        initialProducts={plainProducts}
+        initialCategories={plainCategories}
+        initialCustomers={plainCustomers}
+        storeConfig={{
+          name: store?.name || 'KASIRKU POS',
+          taxActive: store?.taxActive || false,
+          taxRate: store?.taxRate || 11,
+          serviceCharge: store?.serviceCharge || 0,
+          receiptFooter: store?.receiptFooter || '',
+          paymentInfo: store?.paymentInfo || ''
+        }}
+      />
+    )
+  } catch (err: any) {
+    console.error("KasirPage DB Connection Error:", err?.message)
+    // Safe fallback if Hostinger DB is completely unreachable
+    return (
+      <PosClient
+        initialProducts={[]}
+        initialCategories={[]}
+        initialCustomers={[]}
+        storeConfig={{
+          name: 'KASIRKU POS',
+          taxActive: false,
+          taxRate: 11,
+          serviceCharge: 0,
+          receiptFooter: '',
+          paymentInfo: ''
+        }}
+      />
+    )
+  }
 }
