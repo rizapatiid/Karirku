@@ -20,8 +20,7 @@ export default async function StoreProfilePage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        {/* Note the encType for file uploads */}
-        <form action={updateStoreProfile as any} className="space-y-6" encType="multipart/form-data">
+        <form action={updateStoreProfile as any} className="space-y-6">
           <input type="hidden" name="id" value={store?.id || ''} />
           <input type="hidden" name="existingLogoUrl" value={store?.logoUrl || ''} />
           
