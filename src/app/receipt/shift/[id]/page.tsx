@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+import PrintShiftButton from './PrintShiftButton'
 
 export default async function ShiftReceiptPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params
@@ -115,11 +116,7 @@ export default async function ShiftReceiptPage({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      <div className="no-print mt-4 flex gap-2 w-full max-w-[310px]">
-        <button onClick={() => window.print()} className="w-full bg-gray-900 text-white text-xs font-bold py-2.5 rounded-xl">
-          Cetak Struk Shift
-        </button>
-      </div>
+      <PrintShiftButton />
     </div>
   )
 }
