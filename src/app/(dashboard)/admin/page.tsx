@@ -85,6 +85,10 @@ export default async function AdminDashboardPage() {
             Aksi Cepat Admin
           </h3>
           <div className="grid grid-cols-2 gap-4">
+            <Link href="/users" className="flex flex-col items-center justify-center p-6 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 rounded-xl transition text-gray-700 gap-3">
+              <Users size={32} />
+              <span className="font-medium text-center">Pengelola Akun & Karyawan</span>
+            </Link>
             <Link href="/products/create" className="flex flex-col items-center justify-center p-6 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 rounded-xl transition text-gray-700 gap-3">
               <Package size={32} />
               <span className="font-medium">Tambah Produk</span>

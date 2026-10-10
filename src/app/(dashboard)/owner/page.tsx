@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma'
-import { DollarSign, ShoppingBag, AlertTriangle, TrendingUp, Package, Trophy } from 'lucide-react'
+import { DollarSign, ShoppingBag, AlertTriangle, TrendingUp, Package, Trophy, Users } from 'lucide-react'
 import Link from 'next/link'
 import DashboardChart from './components/DashboardChart'
 import TopProductsChart from './components/TopProductsChart'
@@ -200,6 +200,21 @@ export default async function OwnerDashboardPage() {
                 ))
               )}
             </div>
+          </div>
+          {/* Quick Management Widget */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between">
+              <span>Pengelolaan Sistem</span>
+              <Users size={18} className="text-blue-500" />
+            </h3>
+            <p className="text-xs text-gray-500 mb-4">Kelola akun staff, role, dan hak akses toko</p>
+            <Link
+              href="/users"
+              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-2 shadow-xs"
+            >
+              <Users size={16} />
+              <span>Kelola Akun & Karyawan</span>
+            </Link>
           </div>
         </div>
       </div>

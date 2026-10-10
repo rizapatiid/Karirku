@@ -58,7 +58,7 @@ export default async function DashboardLayout({
       group: 'Sistem',
       items: [
         { href: '/audit-logs',iconName: 'ShieldCheck',    label: 'Audit Log',          roles: ['OWNER'] },
-        { href: '/users',     iconName: 'Users',          label: 'Pengguna (Role)',     roles: ['OWNER'] },
+        { href: '/users',     iconName: 'Users',          label: 'Pengelola Akun & Karyawan', roles: ['OWNER', 'ADMIN'] },
         { href: '/settings',  iconName: 'Settings',       label: 'Pengaturan Pro',     roles: ['OWNER'] },
       ]
     },
