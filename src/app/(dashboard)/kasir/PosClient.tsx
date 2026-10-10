@@ -33,6 +33,7 @@ interface Props {
   initialProducts: Product[]
   initialCategories: Category[]
   initialCustomers: Customer[]
+  initialEmployees?: { id: string; name: string; username: string }[]
   currentUser?: { id: string; name: string }
   initialShift?: {
     id: string
@@ -63,7 +64,7 @@ const CategorySvgIcon = ({ name, size = 15 }: { name: string; size?: number }) =
   return <Layers size={size} />
 }
 
-export default function PosClient({ initialProducts, initialCategories, initialCustomers, currentUser, initialShift, storeConfig }: Props) {
+export default function PosClient({ initialProducts, initialCategories, initialCustomers, initialEmployees = [], currentUser, initialShift, storeConfig }: Props) {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
   const [selectedCustomer, setSelectedCustomer] = useState<string>('')
@@ -930,18 +931,44 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             </div>
 
             <div className="space-y-3.5">
-              {/* ID / Code Karyawan Input */}
+              {/* ID / Code Karyawan Selection & Validation */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">ID / Nama Karyawan Kasir</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center justify-between">
+                  <span>Pilih / Input Karyawan Kasir</span>
+                  {initialEmployees.some(e => e.name === employeeCodeInput || e.username === employeeCodeInput || e.id === employeeCodeInput) ? (
+                    <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
+                      <CheckCircle2 size={12} /> Karyawan Terdaftar
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-amber-600 font-bold">
+                      Validasi Database...
+                    </span>
+                  )}
+                </label>
                 <div className="relative">
                   <UserCheck className="absolute left-3.5 top-2.5 text-gray-400 w-4 h-4 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={employeeCodeInput}
-                    onChange={(e) => setEmployeeCodeInput(e.target.value)}
-                    placeholder="Masukkan ID / Nama Karyawan..."
-                    className="w-full pl-10 pr-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
+                  {initialEmployees.length > 0 ? (
+                    <select
+                      value={employeeCodeInput}
+                      onChange={(e) => setEmployeeCodeInput(e.target.value)}
+                      className="w-full pl-10 pr-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                    >
+                      <option value="" disabled>-- Pilih Karyawan Kasir Terdaftar --</option>
+                      {initialEmployees.map(emp => (
+                        <option key={emp.id} value={emp.name}>
+                          {emp.name} (@{emp.username})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={employeeCodeInput}
+                      onChange={(e) => setEmployeeCodeInput(e.target.value)}
+                      placeholder="Masukkan Username / Nama Karyawan..."
+                      className="w-full pl-10 pr-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  )}
                 </div>
               </div>
 

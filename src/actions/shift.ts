@@ -43,16 +43,43 @@ export async function openShift({
   notes?: string 
 }) {
   try {
-    // Check if user already has an active open shift
+    // 1. Validate employee existence in database
+    let targetUser = await prisma.user.findUnique({ where: { id: userId } })
+
+    if (employeeCode && employeeCode.trim() !== '') {
+      const matchedUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { id: employeeCode.trim() },
+            { username: employeeCode.trim() },
+            { name: { equals: employeeCode.trim() } },
+          ],
+          status: 'ACTIVE',
+        },
+      })
+
+      if (!matchedUser) {
+        return { 
+          success: false, 
+          error: `ID / Nama Karyawan '${employeeCode}' tidak ditemukan atau status tidak aktif di database!` 
+        }
+      }
+      targetUser = matchedUser
+    }
+
+    if (!targetUser) {
+      return { success: false, error: 'Karyawan kasir tidak terdaftar dalam sistem!' }
+    }
+
+    // 2. Check if target cashier already has an active open shift
     const existingShift = await prisma.shift.findFirst({
-      where: { userId, status: 'OPEN' },
+      where: { userId: targetUser.id, status: 'OPEN' },
     })
 
     if (existingShift) {
-      return { success: false, error: 'Kasir sudah memiliki shift aktif!' }
+      return { success: false, error: `Karyawan (${targetUser.name}) sudah memiliki shift aktif!` }
     }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } })
     const store = await prisma.store.findFirst()
 
     const shiftCount = await prisma.shift.count()
@@ -61,11 +88,11 @@ export async function openShift({
 
     const newShift = await prisma.shift.create({
       data: {
-        userId,
-        storeId: store?.id || user?.storeId || null,
+        userId: targetUser.id,
+        storeId: store?.id || targetUser.storeId || null,
         shiftNumber,
         startCash,
-        employeeCode: employeeCode || user?.username || null,
+        employeeCode: targetUser.name,
         selfieUrl: selfieUrl || null,
         notes: notes || null,
         status: 'OPEN',
