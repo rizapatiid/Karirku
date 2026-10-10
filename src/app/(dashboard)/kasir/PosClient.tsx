@@ -29,11 +29,20 @@ type Customer = { id: string; name: string; phone: string | null }
 type CartItem = Product & { quantity: number; note?: string }
 type HeldOrder = { id: string; time: Date; cart: CartItem[]; orderType: string; note: string }
 
+type ShiftScheduleItem = {
+  id: string
+  name: string
+  startTime: string
+  endTime: string
+  notes: string | null
+}
+
 interface Props {
   initialProducts: Product[]
   initialCategories: Category[]
   initialCustomers: Customer[]
   initialEmployees?: { id: string; name: string; username: string }[]
+  initialShiftSchedules?: ShiftScheduleItem[]
   currentUser?: { id: string; name: string }
   initialSelfie?: string | null
   initialShift?: {
@@ -65,7 +74,7 @@ const CategorySvgIcon = ({ name, size = 15 }: { name: string; size?: number }) =
   return <Layers size={size} />
 }
 
-export default function PosClient({ initialProducts, initialCategories, initialCustomers, initialEmployees = [], currentUser, initialSelfie, initialShift, storeConfig }: Props) {
+export default function PosClient({ initialProducts, initialCategories, initialCustomers, initialEmployees = [], initialShiftSchedules = [], currentUser, initialSelfie, initialShift, storeConfig }: Props) {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
   const [selectedCustomer, setSelectedCustomer] = useState<string>('')
@@ -89,6 +98,48 @@ export default function PosClient({ initialProducts, initialCategories, initialC
   const [actualCashInput, setActualCashInput] = useState('')
   const [shiftNoteInput, setShiftNoteInput] = useState('')
   const [shiftProcessing, setShiftProcessing] = useState(false)
+
+  // Auto detect active shift based on master schedules or time fallbacks
+  const detectedShift = useMemo(() => {
+    const now = new Date()
+    const currentMin = now.getHours() * 60 + now.getMinutes()
+
+    if (initialShiftSchedules && initialShiftSchedules.length > 0) {
+      for (const sch of initialShiftSchedules) {
+        const [sH, sM] = sch.startTime.split(':').map(Number)
+        const [eH, eM] = sch.endTime.split(':').map(Number)
+        const startMin = sH * 60 + sM
+        const endMin = eH * 60 + eM
+
+        if (startMin < endMin) {
+          if (currentMin >= startMin && currentMin < endMin) {
+            return { name: sch.name, timeRange: `${sch.startTime} - ${sch.endTime} WIB` }
+          }
+        } else {
+          // Overnight shift e.g. 23:00 - 07:00
+          if (currentMin >= startMin || currentMin < endMin) {
+            return { name: sch.name, timeRange: `${sch.startTime} - ${sch.endTime} WIB` }
+          }
+        }
+      }
+    }
+
+    // Default time-based fallbacks if no DB master schedule match
+    const hour = now.getHours()
+    if (hour >= 7 && hour < 15) {
+      return { name: 'Shift 1 (Pagi)', timeRange: '07:00 - 15:00 WIB' }
+    } else if (hour >= 15 && hour < 23) {
+      return { name: 'Shift 2 (Sore)', timeRange: '15:00 - 23:00 WIB' }
+    } else {
+      return { name: 'Shift 3 (Malam)', timeRange: '23:00 - 07:00 WIB' }
+    }
+  }, [initialShiftSchedules])
+
+  useEffect(() => {
+    if (!shiftNoteInput && detectedShift?.name) {
+      setShiftNoteInput(detectedShift.name)
+    }
+  }, [detectedShift])
 
   // Employee ID & Selfie WebCam States
   const [employeeCodeInput, setEmployeeCodeInput] = useState(currentUser?.name || '')
@@ -932,6 +983,27 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             </div>
 
             <div className="space-y-3.5">
+              {/* Info Shift Aktif Terdeteksi Otomatis (Tampil di Atas Card Nama) */}
+              <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50/80 border border-amber-200/90 rounded-2xl flex items-center justify-between shadow-2xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black shadow-2xs shrink-0">
+                    <Clock size={16} />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black text-amber-800 uppercase tracking-wider flex items-center gap-1">
+                      <span>⏰ Shift Aktif Terdeteksi</span>
+                    </div>
+                    <div className="text-xs font-black text-gray-900 flex items-center gap-1.5 mt-0.5">
+                      <span className="text-amber-800 font-extrabold">{detectedShift.name}</span>
+                      <span className="text-gray-500 text-[10px] font-bold">({detectedShift.timeRange})</span>
+                    </div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-200/60 shrink-0">
+                  Otomatis
+                </span>
+              </div>
+
               {/* Info Kasir Terautentikasi (Otomatis dari Login) */}
               <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-2xl flex items-center gap-3">
                 {capturedSelfie ? (

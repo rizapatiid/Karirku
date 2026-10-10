@@ -22,8 +22,8 @@ export default async function KasirPage() {
     const session = await getSession()
     const activeShift = session ? await getCurrentShift(session.userId) : null
 
-    // Fetch products, categories, customers, store, and active employees
-    const [products, categories, customers, store, employees] = await withRetry(() => 
+    // Fetch products, categories, customers, store, active employees, and shift schedules
+    const [products, categories, customers, store, employees, shiftSchedules] = await withRetry(() => 
       Promise.all([
         prisma.product.findMany({
           where: { status: 'ACTIVE' },
@@ -44,6 +44,10 @@ export default async function KasirPage() {
         prisma.user.findMany({
           where: { status: 'ACTIVE' },
           select: { id: true, name: true, username: true }
+        }),
+        prisma.shiftSchedule.findMany({
+          where: { status: 'ACTIVE' },
+          orderBy: { startTime: 'asc' }
         })
       ])
     )
@@ -96,6 +100,7 @@ export default async function KasirPage() {
         initialCategories={plainCategories}
         initialCustomers={plainCustomers}
         initialEmployees={plainEmployees}
+        initialShiftSchedules={JSON.parse(JSON.stringify(shiftSchedules || []))}
         currentUser={{ id: session?.userId || '', name: loggedInUser?.name || session?.name || 'Kasir' }}
         initialSelfie={session?.selfie || null}
         initialShift={serializedShift}
