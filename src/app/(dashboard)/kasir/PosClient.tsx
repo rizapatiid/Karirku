@@ -135,12 +135,6 @@ export default function PosClient({ initialProducts, initialCategories, initialC
     }
   }, [initialShiftSchedules])
 
-  useEffect(() => {
-    if (!shiftNoteInput && detectedShift?.name) {
-      setShiftNoteInput(detectedShift.name)
-    }
-  }, [detectedShift])
-
   // Employee ID & Selfie WebCam States
   const [employeeCodeInput, setEmployeeCodeInput] = useState(currentUser?.name || '')
   const [capturedSelfie, setCapturedSelfie] = useState<string | null>(initialSelfie || null)
