@@ -937,20 +937,20 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 {capturedSelfie ? (
                   <img
                     src={capturedSelfie}
-                    alt="Selfie Kasir"
+                    alt={currentUser?.name || "Selfie Kasir"}
                     className="w-12 h-12 rounded-xl object-cover border-2 border-emerald-500 shadow-2xs shrink-0"
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-blue-600 text-white font-black text-lg flex items-center justify-center shrink-0">
-                    {currentUser?.name?.charAt(0).toUpperCase() || 'K'}
+                    {(currentUser?.name && currentUser.name !== 'Kasir' ? currentUser.name : (employeeCodeInput || 'K')).charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full w-fit mb-0.5">
                     <BadgeCheck size={12} /> Kasir Terverifikasi
                   </div>
-                  <h4 className="text-sm font-extrabold text-gray-900 truncate">
-                    {employeeCodeInput || currentUser?.name || 'Kasir'}
+                  <h4 className="text-base font-black text-gray-900 truncate">
+                    {currentUser?.name || employeeCodeInput || 'Kasir'}
                   </h4>
                   <p className="text-[10px] text-gray-500 font-medium">Absensi selfie & ID terkonfirmasi saat login</p>
                 </div>

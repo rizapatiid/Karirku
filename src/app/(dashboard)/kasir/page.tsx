@@ -86,13 +86,17 @@ export default async function KasirPage() {
       notes: activeShift.notes
     } : null
 
+    const loggedInUser = session?.userId 
+      ? (employees || []).find(e => e.id === session.userId) 
+      : null
+
     return (
       <PosClient
         initialProducts={plainProducts}
         initialCategories={plainCategories}
         initialCustomers={plainCustomers}
         initialEmployees={plainEmployees}
-        currentUser={{ id: session?.userId || '', name: session?.name || 'Kasir' }}
+        currentUser={{ id: session?.userId || '', name: loggedInUser?.name || session?.name || 'Kasir' }}
         initialSelfie={session?.selfie || null}
         initialShift={serializedShift}
         storeConfig={{
