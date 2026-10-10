@@ -455,7 +455,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-5 h-full min-h-[calc(100vh-7.5rem)]">
+    <div className="flex flex-col lg:flex-row gap-5 h-full min-h-[calc(100vh-7.5rem)] relative">
       {/* Kiri: Katalog Produk & Kategori */}
       <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
         {/* Top Header Bar with Live Indicator & Search */}
@@ -918,7 +918,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
 
       {/* Checkout Success Popup Modal Overlay */}
       {checkoutSuccess && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 rounded-2xl">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 text-center flex flex-col items-center">
             <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4 border border-emerald-100 shadow-2xs">
               <CheckCircle2 className="w-9 h-9" />
@@ -964,7 +964,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
 
       {/* Modal Buka Shift Kasir dengan ID Karyawan & Selfie */}
       {showOpenShiftModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto rounded-2xl">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 space-y-4 my-auto">
             <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
               <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold border border-amber-100 shadow-2xs shrink-0">
@@ -1084,7 +1084,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
 
       {/* Modal Tutup Shift Kasir */}
       {showCloseShiftModal && activeShift && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 rounded-2xl">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-3">
