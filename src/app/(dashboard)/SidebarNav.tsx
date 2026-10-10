@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Users2, LayoutDashboard, ShoppingCart, Package, Users, Settings, FileText, ArrowRightLeft, ShieldCheck, Wallet, ClipboardList, HelpCircle, ChevronRight, Clock } from 'lucide-react'
+import { Users2, LayoutDashboard, ShoppingCart, Package, Users, Settings, FileText, ArrowRightLeft, ShieldCheck, Wallet, ClipboardList, HelpCircle, ChevronRight, Clock, UserCheck } from 'lucide-react'
 
 const ICON_MAP: Record<string, any> = {
   LayoutDashboard,
@@ -10,6 +10,7 @@ const ICON_MAP: Record<string, any> = {
   FileText,
   ClipboardList,
   Clock,
+  UserCheck,
   Users2,
   Users,
   Package,
