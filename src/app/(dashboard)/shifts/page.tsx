@@ -85,6 +85,7 @@ export default async function ShiftsPage() {
           <table className="w-full text-left text-xs">
             <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider border-b border-gray-200">
               <tr>
+                <th className="px-5 py-3.5">Selfie</th>
                 <th className="px-5 py-3.5">No. Shift</th>
                 <th className="px-5 py-3.5">Kasir / Karyawan</th>
                 <th className="px-5 py-3.5">Waktu Shift</th>
@@ -104,6 +105,17 @@ export default async function ShiftsPage() {
 
                 return (
                   <tr key={shift.id} className="hover:bg-gray-50/80 transition">
+                    <td className="px-5 py-4">
+                      {shift.selfieUrl ? (
+                        <a href={shift.selfieUrl} target="_blank" title="Lihat Foto Selfie Kasir">
+                          <img src={shift.selfieUrl} alt="Selfie" className="w-9 h-9 rounded-full object-cover border-2 border-emerald-500 shadow-2xs hover:scale-110 transition" />
+                        </a>
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 text-gray-400 flex items-center justify-center text-[10px]">
+                          No Foto
+                        </div>
+                      )}
+                    </td>
                     <td className="px-5 py-4 font-mono font-bold text-gray-900">{shift.shiftNumber}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
@@ -111,7 +123,7 @@ export default async function ShiftsPage() {
                           {shift.user.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-bold text-gray-900">{shift.user.name}</div>
+                          <div className="font-bold text-gray-900">{shift.employeeCode || shift.user.name}</div>
                           <div className="text-[10px] text-gray-400">@{shift.user.username}</div>
                         </div>
                       </div>

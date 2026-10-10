@@ -29,7 +29,19 @@ export async function getCurrentShift(userId: string) {
   }
 }
 
-export async function openShift({ userId, startCash, notes }: { userId: string; startCash: number; notes?: string }) {
+export async function openShift({ 
+  userId, 
+  startCash, 
+  employeeCode, 
+  selfieUrl, 
+  notes 
+}: { 
+  userId: string; 
+  startCash: number; 
+  employeeCode?: string; 
+  selfieUrl?: string; 
+  notes?: string 
+}) {
   try {
     // Check if user already has an active open shift
     const existingShift = await prisma.shift.findFirst({
@@ -53,6 +65,8 @@ export async function openShift({ userId, startCash, notes }: { userId: string; 
         storeId: store?.id || user?.storeId || null,
         shiftNumber,
         startCash,
+        employeeCode: employeeCode || user?.username || null,
+        selfieUrl: selfieUrl || null,
         notes: notes || null,
         status: 'OPEN',
       },

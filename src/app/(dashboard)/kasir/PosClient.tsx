@@ -8,7 +8,8 @@ import {
   CreditCard, Banknote, Building2, Utensils, ShoppingBag, Truck, 
   FileText, Keyboard, X, Sparkles, AlertCircle, Layers, UtensilsCrossed, 
   CupSoda, Coffee, Cookie, IceCream, Package, Printer, Wifi, Clock, 
-  UserCheck, Receipt, ArrowRight, Zap, ShieldCheck, Lock, Unlock, Coins
+  UserCheck, Receipt, ArrowRight, Zap, ShieldCheck, Lock, Unlock, Coins,
+  Camera, RefreshCw, BadgeCheck
 } from 'lucide-react'
 
 type Product = {
@@ -78,7 +79,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
   const [checkoutSuccess, setCheckoutSuccess] = useState<{ invoice: string; id: string; queueNumber?: number | null } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Shift Management States
+  // Shift Management & Employee Selfie States
   const [activeShift, setActiveShift] = useState(initialShift || null)
   const [showOpenShiftModal, setShowOpenShiftModal] = useState(!initialShift)
   const [showCloseShiftModal, setShowCloseShiftModal] = useState(false)
@@ -86,6 +87,52 @@ export default function PosClient({ initialProducts, initialCategories, initialC
   const [actualCashInput, setActualCashInput] = useState('')
   const [shiftNoteInput, setShiftNoteInput] = useState('')
   const [shiftProcessing, setShiftProcessing] = useState(false)
+
+  // Employee ID & Selfie WebCam States
+  const [employeeCodeInput, setEmployeeCodeInput] = useState(currentUser?.name || '')
+  const [capturedSelfie, setCapturedSelfie] = useState<string | null>(null)
+  const [isCameraActive, setIsCameraActive] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 400, height: 400, facingMode: 'user' } })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        videoRef.current.play()
+        setIsCameraActive(true)
+      }
+    } catch (e) {
+      console.error('Webcam permission error:', e)
+      setError('Gagal mengakses kamera. Izinkan akses kamera pada browser Anda.')
+    }
+  }
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream
+      stream.getTracks().forEach(track => track.stop())
+      videoRef.current.srcObject = null
+      setIsCameraActive(false)
+    }
+  }
+
+  const takeSelfie = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current
+      const video = videoRef.current
+      canvas.width = video.videoWidth || 300
+      canvas.height = video.videoHeight || 300
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+        setCapturedSelfie(dataUrl)
+        stopCamera()
+      }
+    }
+  }
 
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -101,7 +148,13 @@ export default function PosClient({ initialProducts, initialCategories, initialC
     }
 
     setShiftProcessing(true)
-    const res = await openShift({ userId: currentUser.id, startCash, notes: shiftNoteInput })
+    const res = await openShift({ 
+      userId: currentUser.id, 
+      startCash, 
+      employeeCode: employeeCodeInput || currentUser.name,
+      selfieUrl: capturedSelfie || undefined,
+      notes: shiftNoteInput 
+    })
     if (res.success && res.shift) {
       setActiveShift({
         id: res.shift.id,
@@ -112,6 +165,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
       })
       setShowOpenShiftModal(false)
       setShiftNoteInput('')
+      stopCamera()
     } else {
       setError(res.error || 'Gagal membuka shift')
     }
@@ -861,21 +915,104 @@ export default function PosClient({ initialProducts, initialCategories, initialC
         </div>
       )}
 
-      {/* Modal Buka Shift Kasir */}
+      {/* Modal Buka Shift Kasir dengan ID Karyawan & Selfie */}
       {showOpenShiftModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 space-y-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 space-y-4 my-auto">
             <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold border border-amber-100 shadow-2xs">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold border border-amber-100 shadow-2xs shrink-0">
                 <Unlock size={20} />
               </div>
               <div>
                 <h3 className="text-lg font-black text-gray-900 leading-tight">Buka Shift Kasir Baru</h3>
-                <p className="text-xs text-gray-500">Kasir: <strong className="text-gray-900">{currentUser?.name || 'Kasir'}</strong></p>
+                <p className="text-xs text-gray-500">Absensi Masuk & Modal Awal Kasir</p>
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3.5">
+              {/* ID / Code Karyawan Input */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">ID / Nama Karyawan Kasir</label>
+                <div className="relative">
+                  <UserCheck className="absolute left-3.5 top-2.5 text-gray-400 w-4 h-4 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={employeeCodeInput}
+                    onChange={(e) => setEmployeeCodeInput(e.target.value)}
+                    placeholder="Masukkan ID / Nama Karyawan..."
+                    className="w-full pl-10 pr-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Foto Selfie Absensi Shift */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-700 flex items-center justify-between">
+                  <span>Foto Selfie Absensi Shift</span>
+                  {capturedSelfie && (
+                    <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
+                      <BadgeCheck size={12} /> Foto Terverifikasi
+                    </span>
+                  )}
+                </label>
+
+                <div className="relative w-full h-44 bg-gray-900 rounded-2xl overflow-hidden border border-gray-300 flex items-center justify-center">
+                  <video 
+                    ref={videoRef} 
+                    className={`w-full h-full object-cover ${isCameraActive ? 'block' : 'hidden'}`}
+                  />
+                  <canvas ref={canvasRef} className="hidden" />
+
+                  {capturedSelfie && !isCameraActive && (
+                    <img 
+                      src={capturedSelfie} 
+                      alt="Selfie Kasir" 
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+
+                  {!isCameraActive && !capturedSelfie && (
+                    <div className="flex flex-col items-center justify-center text-gray-400 p-4 text-center">
+                      <Camera size={36} className="opacity-40 mb-1" />
+                      <p className="text-xs font-bold text-gray-300">Belum ada foto selfie</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5">Ambil foto webcam untuk bukti verifikasi shift</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {!isCameraActive ? (
+                    <button
+                      type="button"
+                      onClick={startCamera}
+                      className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Camera size={14} />
+                      <span>{capturedSelfie ? 'Foto Ulang' : 'Nyalakan Kamera'}</span>
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={takeSelfie}
+                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Camera size={14} />
+                        <span>Ambil Foto Selfie</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={stopCamera}
+                        className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs font-bold transition cursor-pointer"
+                      >
+                        Batal
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Nominal Modal Awal */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Nominal Modal Awal di Laci (Rp)</label>
                 <input
@@ -883,18 +1020,18 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                   value={startCashInput}
                   onChange={(e) => setStartCashInput(e.target.value)}
                   placeholder="Contoh: 500000"
-                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base font-black text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-base font-black text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
 
-              {/* Presets */}
-              <div className="grid grid-cols-3 gap-2">
+              {/* Quick Presets */}
+              <div className="grid grid-cols-3 gap-1.5">
                 {[200000, 500000, 1000000].map(val => (
                   <button
                     key={val}
                     type="button"
                     onClick={() => setStartCashInput(val.toString())}
-                    className="py-1.5 px-2 bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700 border border-gray-200 rounded-lg text-xs font-extrabold transition cursor-pointer"
+                    className="py-1 px-2 bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700 border border-gray-200 rounded-lg text-xs font-extrabold transition cursor-pointer"
                   >
                     {formatRupiah(val)}
                   </button>
@@ -908,7 +1045,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                   value={shiftNoteInput}
                   onChange={(e) => setShiftNoteInput(e.target.value)}
                   placeholder="Contoh: Shift Pagi Toko Utama"
-                  className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3.5 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
             </div>
@@ -916,7 +1053,8 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             <div className="pt-2 flex items-center justify-end gap-2">
               {activeShift && (
                 <button
-                  onClick={() => setShowOpenShiftModal(false)}
+                  type="button"
+                  onClick={() => { stopCamera(); setShowOpenShiftModal(false); }}
                   className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition cursor-pointer"
                 >
                   Kembali

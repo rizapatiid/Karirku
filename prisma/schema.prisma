@@ -556,6 +556,8 @@ model Shift {
   cashSales    Decimal     @default(0) @db.Decimal(15, 2)
   nonCashSales Decimal     @default(0) @db.Decimal(15, 2)
   cashOut      Decimal     @default(0) @db.Decimal(15, 2)
+  employeeCode String?
+  selfieUrl    String?     @db.LongText
   notes        String?     @db.Text
   status       ShiftStatus @default(OPEN)
   createdAt    DateTime    @default(now())
