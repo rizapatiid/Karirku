@@ -147,13 +147,28 @@ export default function PosClient({ initialProducts, initialCategories, initialC
     }
   }, [initialShiftSchedules])
 
-  // Active Cashier Selection from Today's Attendances
+  // Active Cashier Selection (Decoupled from System Login Account)
   const [selectedKasirUserId, setSelectedKasirUserId] = useState<string>(
-    todayAttendances.find(a => a.roleType === 'KASIR')?.userId || todayAttendances[0]?.userId || currentUser?.id || ''
+    todayAttendances.find(a => a.roleType === 'KASIR')?.userId || todayAttendances[0]?.userId || ''
   )
+  const [kasirCodeInput, setKasirCodeInput] = useState<string>('')
 
   const activeKasirInfo = useMemo(() => {
-    const fromAtt = todayAttendances.find(a => a.userId === selectedKasirUserId)
+    const key = (kasirCodeInput || selectedKasirUserId || '').trim().toLowerCase()
+    if (!key) {
+      return {
+        id: '',
+        name: 'Kasir Belum Dipilih',
+        username: '',
+        roleType: 'KASIR',
+        selfie: null
+      }
+    }
+    const fromAtt = todayAttendances.find(a => 
+      a.userId.toLowerCase() === key || 
+      a.username.toLowerCase() === key || 
+      a.userName.toLowerCase() === key
+    )
     if (fromAtt) {
       return {
         id: fromAtt.userId,
@@ -163,7 +178,11 @@ export default function PosClient({ initialProducts, initialCategories, initialC
         selfie: fromAtt.selfieIn || initialSelfie
       }
     }
-    const fromEmp = initialEmployees.find(e => e.id === selectedKasirUserId)
+    const fromEmp = initialEmployees.find(e => 
+      e.id.toLowerCase() === key || 
+      e.username.toLowerCase() === key || 
+      e.name.toLowerCase() === key
+    )
     if (fromEmp) {
       return {
         id: fromEmp.id,
@@ -174,13 +193,13 @@ export default function PosClient({ initialProducts, initialCategories, initialC
       }
     }
     return {
-      id: currentUser?.id || '',
-      name: currentUser?.name || 'Kasir',
+      id: kasirCodeInput || selectedKasirUserId,
+      name: kasirCodeInput || selectedKasirUserId,
       username: '',
       roleType: 'KASIR',
-      selfie: initialSelfie
+      selfie: null
     }
-  }, [selectedKasirUserId, todayAttendances, initialEmployees, currentUser, initialSelfie])
+  }, [kasirCodeInput, selectedKasirUserId, todayAttendances, initialEmployees, initialSelfie])
 
   // Employee ID & Selfie WebCam States
   const [employeeCodeInput, setEmployeeCodeInput] = useState(currentUser?.name || '')
@@ -1073,36 +1092,58 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 </span>
               </div>
 
-              {/* Dropdown Selector Karyawan yang Absen Hari Ini */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center justify-between">
-                  <span>Pilih Karyawan Kasir Bertugas</span>
-                  <span className="text-[10px] text-blue-600 font-extrabold flex items-center gap-1">
-                    <UserCheck size={12} /> {todayAttendances.length > 0 ? `${todayAttendances.length} Karyawan Absen` : 'Semua Karyawan'}
-                  </span>
-                </label>
-                <select
-                  value={selectedKasirUserId}
-                  onChange={(e) => setSelectedKasirUserId(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
-                >
-                  {todayAttendances.length > 0 ? (
-                    todayAttendances.map(att => (
-                      <option key={att.id} value={att.userId}>
-                        {att.userName} ({att.roleType})
-                      </option>
-                    ))
-                  ) : (
-                    initialEmployees.map(emp => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.name} (@{emp.username})
-                      </option>
-                    ))
-                  )}
-                </select>
+              {/* Input ID Karyawan Kasir atau Selector Dropdown */}
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center justify-between">
+                    <span>ID / Username Karyawan Kasir</span>
+                    <span className="text-[10px] text-blue-600 font-extrabold flex items-center gap-1">
+                      <UserCheck size={12} /> Terpisah dari Login Sistem
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={kasirCodeInput}
+                    onChange={(e) => {
+                      setKasirCodeInput(e.target.value)
+                      setSelectedKasirUserId('')
+                    }}
+                    placeholder="Ketik ID / Kode / Username Kasir..."
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">
+                    Atau Pilih Karyawan Absen / Terdaftar
+                  </label>
+                  <select
+                    value={selectedKasirUserId}
+                    onChange={(e) => {
+                      setSelectedKasirUserId(e.target.value)
+                      setKasirCodeInput('')
+                    }}
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                  >
+                    <option value="">-- Pilih dari Daftar Karyawan --</option>
+                    {todayAttendances.length > 0 ? (
+                      todayAttendances.map(att => (
+                        <option key={att.id} value={att.userId}>
+                          {att.userName} ({att.roleType})
+                        </option>
+                      ))
+                    ) : (
+                      initialEmployees.map(emp => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.name} (@{emp.username})
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
               </div>
 
-              {/* Card Nama & Foto Karyawan Terpilih */}
+              {/* Card Nama & Foto Karyawan Kasir Terpilih */}
               <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-2xl flex items-center gap-3">
                 {activeKasirInfo.selfie ? (
                   <img
@@ -1117,12 +1158,14 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full w-fit mb-0.5">
-                    <BadgeCheck size={12} /> Kasir Terverifikasi
+                    <BadgeCheck size={12} /> Kasir Shift Terverifikasi
                   </div>
                   <h4 className="text-base font-black text-gray-900 truncate">
                     {activeKasirInfo.name}
                   </h4>
-                  <p className="text-[10px] text-gray-500 font-medium">Absensi selfie & ID terkonfirmasi saat login</p>
+                  <p className="text-[10px] text-gray-500 font-medium">
+                    Operator Login Sistem: <strong className="text-gray-700">{currentUser?.name || 'Admin'}</strong>
+                  </p>
                 </div>
               </div>
 
