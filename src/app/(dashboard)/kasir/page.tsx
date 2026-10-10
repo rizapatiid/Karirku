@@ -22,8 +22,11 @@ export default async function KasirPage() {
     const session = await getSession()
     const activeShift = session ? await getCurrentShift(session.userId) : null
 
-    // Fetch products, categories, customers, store, active employees, and shift schedules
-    const [products, categories, customers, store, employees, shiftSchedules] = await withRetry(() => 
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+
+    // Fetch products, categories, customers, store, active employees, shift schedules, today attendances, and closed shifts today
+    const [products, categories, customers, store, employees, shiftSchedules, attendances, closedShifts] = await withRetry(() => 
       Promise.all([
         prisma.product.findMany({
           where: { status: 'ACTIVE' },
@@ -48,6 +51,25 @@ export default async function KasirPage() {
         prisma.shiftSchedule.findMany({
           where: { status: 'ACTIVE' },
           orderBy: { startTime: 'asc' }
+        }),
+        prisma.attendance.findMany({
+          where: {
+            clockIn: { gte: todayStart },
+            clockOut: null
+          },
+          include: {
+            user: {
+              select: { id: true, name: true, username: true }
+            }
+          },
+          orderBy: { clockIn: 'desc' }
+        }),
+        prisma.shift.findMany({
+          where: {
+            startTime: { gte: todayStart },
+            status: 'CLOSED'
+          },
+          orderBy: { endTime: 'desc' }
         })
       ])
     )
@@ -82,10 +104,20 @@ export default async function KasirPage() {
       username: e.username
     }))
 
+    const plainAttendances = (attendances || []).map(a => ({
+      id: a.id,
+      userId: a.userId,
+      userName: a.user.name,
+      username: a.user.username,
+      roleType: a.roleType,
+      selfieIn: a.selfieIn,
+      clockIn: a.clockIn.toISOString()
+    }))
+
     const serializedShift = activeShift ? {
       id: activeShift.id,
       shiftNumber: activeShift.shiftNumber,
-      startTime: activeShift.startTime.toISOString(),
+      startTime: typeof activeShift.startTime === 'string' ? activeShift.startTime : new Date(activeShift.startTime).toISOString(),
       startCash: Number(activeShift.startCash),
       notes: activeShift.notes
     } : null
@@ -101,6 +133,8 @@ export default async function KasirPage() {
         initialCustomers={plainCustomers}
         initialEmployees={plainEmployees}
         initialShiftSchedules={JSON.parse(JSON.stringify(shiftSchedules || []))}
+        todayAttendances={plainAttendances}
+        todayClosedShifts={JSON.parse(JSON.stringify(closedShifts || []))}
         currentUser={{ id: session?.userId || '', name: loggedInUser?.name || session?.name || 'Kasir' }}
         initialSelfie={session?.selfie || null}
         initialShift={serializedShift}

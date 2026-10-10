@@ -22,7 +22,7 @@ export async function getCurrentShift(userId: string) {
         startTime: 'desc',
       },
     })
-    return shift
+    return shift ? JSON.parse(JSON.stringify(shift)) : null
   } catch (error) {
     console.error('Error fetching current shift:', error)
     return null
@@ -101,7 +101,7 @@ export async function openShift({
 
     revalidatePath('/kasir')
     revalidatePath('/shifts')
-    return { success: true, shift: newShift }
+    return { success: true, shift: JSON.parse(JSON.stringify(newShift)) }
   } catch (error: any) {
     console.error('Error opening shift:', error)
     return { success: false, error: error.message || 'Gagal membuka shift kasir' }
@@ -176,7 +176,7 @@ export async function closeShift({ shiftId, actualCash, notes }: { shiftId: stri
 
     revalidatePath('/kasir')
     revalidatePath('/shifts')
-    return { success: true, shift: updatedShift }
+    return { success: true, shift: JSON.parse(JSON.stringify(updatedShift)) }
   } catch (error: any) {
     console.error('Error closing shift:', error)
     return { success: false, error: error.message || 'Gagal menutup shift' }
@@ -195,9 +195,36 @@ export async function getAllShifts() {
       },
       take: 100,
     })
-    return shifts
+    return JSON.parse(JSON.stringify(shifts))
   } catch (error) {
     console.error('Error fetching all shifts:', error)
     return []
+  }
+}
+
+export async function resumeShift(shiftId: string) {
+  try {
+    const shift = await prisma.shift.findUnique({
+      where: { id: shiftId },
+    })
+
+    if (!shift) {
+      return { success: false, error: 'Shift tidak ditemukan' }
+    }
+
+    const updatedShift = await prisma.shift.update({
+      where: { id: shiftId },
+      data: {
+        status: 'OPEN',
+        endTime: null,
+      },
+    })
+
+    revalidatePath('/kasir')
+    revalidatePath('/shifts')
+    return { success: true, shift: JSON.parse(JSON.stringify(updatedShift)) }
+  } catch (error: any) {
+    console.error('Error resuming shift:', error)
+    return { success: false, error: error.message || 'Gagal melanjutkan shift' }
   }
 }

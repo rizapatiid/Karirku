@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { processCheckout } from '@/actions/pos'
-import { openShift, closeShift } from '@/actions/shift'
+import { openShift, closeShift, resumeShift } from '@/actions/shift'
 import { 
   Search, ShoppingCart, Plus, Minus, Trash2, CheckCircle2, QrCode, 
   CreditCard, Banknote, Building2, Utensils, ShoppingBag, Truck, 
@@ -37,12 +37,24 @@ type ShiftScheduleItem = {
   notes: string | null
 }
 
+type AttendanceOption = {
+  id: string
+  userId: string
+  userName: string
+  username: string
+  roleType: string
+  selfieIn: string | null
+  clockIn: string
+}
+
 interface Props {
   initialProducts: Product[]
   initialCategories: Category[]
   initialCustomers: Customer[]
   initialEmployees?: { id: string; name: string; username: string }[]
   initialShiftSchedules?: ShiftScheduleItem[]
+  todayAttendances?: AttendanceOption[]
+  todayClosedShifts?: any[]
   currentUser?: { id: string; name: string }
   initialSelfie?: string | null
   initialShift?: {
@@ -74,7 +86,7 @@ const CategorySvgIcon = ({ name, size = 15 }: { name: string; size?: number }) =
   return <Layers size={size} />
 }
 
-export default function PosClient({ initialProducts, initialCategories, initialCustomers, initialEmployees = [], initialShiftSchedules = [], currentUser, initialSelfie, initialShift, storeConfig }: Props) {
+export default function PosClient({ initialProducts, initialCategories, initialCustomers, initialEmployees = [], initialShiftSchedules = [], todayAttendances = [], todayClosedShifts = [], currentUser, initialSelfie, initialShift, storeConfig }: Props) {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
   const [selectedCustomer, setSelectedCustomer] = useState<string>('')
@@ -135,6 +147,41 @@ export default function PosClient({ initialProducts, initialCategories, initialC
     }
   }, [initialShiftSchedules])
 
+  // Active Cashier Selection from Today's Attendances
+  const [selectedKasirUserId, setSelectedKasirUserId] = useState<string>(
+    todayAttendances.find(a => a.roleType === 'KASIR')?.userId || todayAttendances[0]?.userId || currentUser?.id || ''
+  )
+
+  const activeKasirInfo = useMemo(() => {
+    const fromAtt = todayAttendances.find(a => a.userId === selectedKasirUserId)
+    if (fromAtt) {
+      return {
+        id: fromAtt.userId,
+        name: fromAtt.userName,
+        username: fromAtt.username,
+        roleType: fromAtt.roleType,
+        selfie: fromAtt.selfieIn || initialSelfie
+      }
+    }
+    const fromEmp = initialEmployees.find(e => e.id === selectedKasirUserId)
+    if (fromEmp) {
+      return {
+        id: fromEmp.id,
+        name: fromEmp.name,
+        username: fromEmp.username,
+        roleType: 'KASIR',
+        selfie: initialSelfie
+      }
+    }
+    return {
+      id: currentUser?.id || '',
+      name: currentUser?.name || 'Kasir',
+      username: '',
+      roleType: 'KASIR',
+      selfie: initialSelfie
+    }
+  }, [selectedKasirUserId, todayAttendances, initialEmployees, currentUser, initialSelfie])
+
   // Employee ID & Selfie WebCam States
   const [employeeCodeInput, setEmployeeCodeInput] = useState(currentUser?.name || '')
   const [capturedSelfie, setCapturedSelfie] = useState<string | null>(initialSelfie || null)
@@ -186,8 +233,36 @@ export default function PosClient({ initialProducts, initialCategories, initialC
   const [useTax, setUseTax] = useState(storeConfig.taxActive)
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
+  const recentClosedShift = useMemo(() => {
+    const targetUserId = activeKasirInfo.id || selectedKasirUserId || currentUser?.id
+    if (!targetUserId || !todayClosedShifts || todayClosedShifts.length === 0) return null
+    return todayClosedShifts.find((s: any) => s.userId === targetUserId)
+  }, [activeKasirInfo.id, selectedKasirUserId, currentUser, todayClosedShifts])
+
+  const handleResumeShift = async (shiftId: string) => {
+    setShiftProcessing(true)
+    setError(null)
+    const res = await resumeShift(shiftId)
+    if (res.success && res.shift) {
+      setActiveShift({
+        id: res.shift.id,
+        shiftNumber: res.shift.shiftNumber,
+        startTime: typeof res.shift.startTime === 'string' ? res.shift.startTime : new Date(res.shift.startTime).toISOString(),
+        startCash: Number(res.shift.startCash),
+        notes: res.shift.notes
+      })
+      setShowOpenShiftModal(false)
+      setShiftNoteInput('')
+      stopCamera()
+    } else {
+      setError(res.error || 'Gagal melanjutkan shift')
+    }
+    setShiftProcessing(false)
+  }
+
   const handleOpenShiftSubmit = async () => {
-    if (!currentUser?.id) return
+    const shiftUserId = activeKasirInfo.id || currentUser?.id
+    if (!shiftUserId) return
     const startCash = Number(startCashInput.replace(/[^0-9]/g, ''))
     if (isNaN(startCash) || startCash < 0) {
       setError('Masukkan nominal modal awal yang valid')
@@ -196,17 +271,17 @@ export default function PosClient({ initialProducts, initialCategories, initialC
 
     setShiftProcessing(true)
     const res = await openShift({ 
-      userId: currentUser.id, 
+      userId: shiftUserId, 
       startCash, 
-      employeeCode: employeeCodeInput || currentUser.name,
-      selfieUrl: capturedSelfie || undefined,
+      employeeCode: activeKasirInfo.name,
+      selfieUrl: activeKasirInfo.selfie || capturedSelfie || undefined,
       notes: shiftNoteInput 
     })
     if (res.success && res.shift) {
       setActiveShift({
         id: res.shift.id,
         shiftNumber: res.shift.shiftNumber,
-        startTime: res.shift.startTime.toISOString(),
+        startTime: typeof res.shift.startTime === 'string' ? res.shift.startTime : new Date(res.shift.startTime).toISOString(),
         startCash: Number(res.shift.startCash),
         notes: res.shift.notes
       })
@@ -479,7 +554,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
                     <Clock size={13} className="text-emerald-600 animate-pulse" />
-                    <span>Shift Aktif ({activeShift.shiftNumber})</span>
+                    <span>Shift Aktif: {detectedShift.name} ({detectedShift.timeRange})</span>
                   </span>
                   <button
                     onClick={() => setShowCloseShiftModal(true)}
@@ -998,17 +1073,46 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 </span>
               </div>
 
-              {/* Info Kasir Terautentikasi (Otomatis dari Login) */}
+              {/* Dropdown Selector Karyawan yang Absen Hari Ini */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center justify-between">
+                  <span>Pilih Karyawan Kasir Bertugas</span>
+                  <span className="text-[10px] text-blue-600 font-extrabold flex items-center gap-1">
+                    <UserCheck size={12} /> {todayAttendances.length > 0 ? `${todayAttendances.length} Karyawan Absen` : 'Semua Karyawan'}
+                  </span>
+                </label>
+                <select
+                  value={selectedKasirUserId}
+                  onChange={(e) => setSelectedKasirUserId(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                >
+                  {todayAttendances.length > 0 ? (
+                    todayAttendances.map(att => (
+                      <option key={att.id} value={att.userId}>
+                        {att.userName} ({att.roleType})
+                      </option>
+                    ))
+                  ) : (
+                    initialEmployees.map(emp => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name} (@{emp.username})
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              {/* Card Nama & Foto Karyawan Terpilih */}
               <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-2xl flex items-center gap-3">
-                {capturedSelfie ? (
+                {activeKasirInfo.selfie ? (
                   <img
-                    src={capturedSelfie}
-                    alt={currentUser?.name || "Selfie Kasir"}
+                    src={activeKasirInfo.selfie}
+                    alt={activeKasirInfo.name}
                     className="w-12 h-12 rounded-xl object-cover border-2 border-emerald-500 shadow-2xs shrink-0"
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-blue-600 text-white font-black text-lg flex items-center justify-center shrink-0">
-                    {(currentUser?.name && currentUser.name !== 'Kasir' ? currentUser.name : (employeeCodeInput || 'K')).charAt(0).toUpperCase()}
+                    {activeKasirInfo.name.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -1016,11 +1120,40 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                     <BadgeCheck size={12} /> Kasir Terverifikasi
                   </div>
                   <h4 className="text-base font-black text-gray-900 truncate">
-                    {currentUser?.name || employeeCodeInput || 'Kasir'}
+                    {activeKasirInfo.name}
                   </h4>
                   <p className="text-[10px] text-gray-500 font-medium">Absensi selfie & ID terkonfirmasi saat login</p>
                 </div>
               </div>
+
+              {/* Option to Resume Recently Closed Shift Today */}
+              {recentClosedShift && (
+                <div className="p-3.5 bg-emerald-50/90 border border-emerald-200 rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <RefreshCw size={16} className="text-emerald-700 animate-spin-slow" />
+                      <h4 className="text-xs font-black text-emerald-900">
+                        Shift Hari Ini Ditemukan (#{recentClosedShift.shiftNumber})
+                      </h4>
+                    </div>
+                    <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                      Telah Ditutup
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-800 font-medium leading-snug">
+                    Karyawan ini ({activeKasirInfo.name}) telah memiliki shift hari ini yang ditutup jam {recentClosedShift.endTime ? new Date(recentClosedShift.endTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''} WIB. Anda dapat melanjutkan kembali shift ini.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleResumeShift(recentClosedShift.id)}
+                    disabled={shiftProcessing}
+                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw size={13} />
+                    <span>{shiftProcessing ? 'Melanjutkan...' : `Lanjutkan Shift (${recentClosedShift.shiftNumber})`}</span>
+                  </button>
+                </div>
+              )}
 
               {/* Nominal Modal Awal */}
               <div>
