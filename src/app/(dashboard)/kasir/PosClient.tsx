@@ -35,6 +35,7 @@ interface Props {
   initialCustomers: Customer[]
   initialEmployees?: { id: string; name: string; username: string }[]
   currentUser?: { id: string; name: string }
+  initialSelfie?: string | null
   initialShift?: {
     id: string
     shiftNumber: string
@@ -64,7 +65,7 @@ const CategorySvgIcon = ({ name, size = 15 }: { name: string; size?: number }) =
   return <Layers size={size} />
 }
 
-export default function PosClient({ initialProducts, initialCategories, initialCustomers, initialEmployees = [], currentUser, initialShift, storeConfig }: Props) {
+export default function PosClient({ initialProducts, initialCategories, initialCustomers, initialEmployees = [], currentUser, initialSelfie, initialShift, storeConfig }: Props) {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
   const [selectedCustomer, setSelectedCustomer] = useState<string>('')
@@ -91,7 +92,7 @@ export default function PosClient({ initialProducts, initialCategories, initialC
 
   // Employee ID & Selfie WebCam States
   const [employeeCodeInput, setEmployeeCodeInput] = useState(currentUser?.name || '')
-  const [capturedSelfie, setCapturedSelfie] = useState<string | null>(null)
+  const [capturedSelfie, setCapturedSelfie] = useState<string | null>(initialSelfie || null)
   const [isCameraActive, setIsCameraActive] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)

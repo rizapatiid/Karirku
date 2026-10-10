@@ -93,6 +93,7 @@ export default async function KasirPage() {
         initialCustomers={plainCustomers}
         initialEmployees={plainEmployees}
         currentUser={{ id: session?.userId || '', name: session?.name || 'Kasir' }}
+        initialSelfie={session?.selfie || null}
         initialShift={serializedShift}
         storeConfig={{
           name: store?.name || 'KASIRKU POS',
