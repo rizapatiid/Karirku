@@ -61,6 +61,48 @@ export async function login(formData: FormData) {
   redirect(dest)
 }
 
+export async function validateCashierEmployee(employeeIdOrUsername: string) {
+  try {
+    const trimmed = employeeIdOrUsername.trim()
+    if (!trimmed) {
+      return { success: false, error: 'Masukkan ID atau Username Karyawan' }
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { id: trimmed },
+          { username: trimmed },
+          { name: { equals: trimmed } }
+        ],
+        status: 'ACTIVE'
+      },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        role: { select: { name: true } }
+      }
+    })
+
+    if (!user) {
+      return { success: false, error: `ID / Username '${trimmed}' tidak ditemukan atau tidak aktif di database!` }
+    }
+
+    return { 
+      success: true, 
+      user: {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        role: user.role.name
+      }
+    }
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Gagal memvalidasi ID Karyawan' }
+  }
+}
+
 export async function getRegisteredCashiers() {
   try {
     const cashiers = await prisma.user.findMany({

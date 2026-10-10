@@ -576,3 +576,16 @@ enum ShiftStatus {
   OPEN
   CLOSED
 }
+
+model ShiftSchedule {
+  id        String   @id @default(uuid())
+  name      String
+  startTime String
+  endTime   String
+  notes     String?  @db.Text
+  status    Status   @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("shift_schedules")
+}

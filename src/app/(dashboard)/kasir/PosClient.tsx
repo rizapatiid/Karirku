@@ -932,111 +932,27 @@ export default function PosClient({ initialProducts, initialCategories, initialC
             </div>
 
             <div className="space-y-3.5">
-              {/* ID / Code Karyawan Selection & Validation */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center justify-between">
-                  <span>Pilih / Input Karyawan Kasir</span>
-                  {initialEmployees.some(e => e.name === employeeCodeInput || e.username === employeeCodeInput || e.id === employeeCodeInput) ? (
-                    <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
-                      <CheckCircle2 size={12} /> Karyawan Terdaftar
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-amber-600 font-bold">
-                      Validasi Database...
-                    </span>
-                  )}
-                </label>
-                <div className="relative">
-                  <UserCheck className="absolute left-3.5 top-2.5 text-gray-400 w-4 h-4 pointer-events-none" />
-                  {initialEmployees.length > 0 ? (
-                    <select
-                      value={employeeCodeInput}
-                      onChange={(e) => setEmployeeCodeInput(e.target.value)}
-                      className="w-full pl-10 pr-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
-                    >
-                      <option value="" disabled>-- Pilih Karyawan Kasir Terdaftar --</option>
-                      {initialEmployees.map(emp => (
-                        <option key={emp.id} value={emp.name}>
-                          {emp.name} (@{emp.username})
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value={employeeCodeInput}
-                      onChange={(e) => setEmployeeCodeInput(e.target.value)}
-                      placeholder="Masukkan Username / Nama Karyawan..."
-                      className="w-full pl-10 pr-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Foto Selfie Absensi Shift */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-gray-700 flex items-center justify-between">
-                  <span>Foto Selfie Absensi Shift</span>
-                  {capturedSelfie && (
-                    <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
-                      <BadgeCheck size={12} /> Foto Terverifikasi
-                    </span>
-                  )}
-                </label>
-
-                <div className="relative w-full h-44 bg-gray-900 rounded-2xl overflow-hidden border border-gray-300 flex items-center justify-center">
-                  <video 
-                    ref={videoRef} 
-                    className={`w-full h-full object-cover ${isCameraActive ? 'block' : 'hidden'}`}
+              {/* Info Kasir Terautentikasi (Otomatis dari Login) */}
+              <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-2xl flex items-center gap-3">
+                {capturedSelfie ? (
+                  <img
+                    src={capturedSelfie}
+                    alt="Selfie Kasir"
+                    className="w-12 h-12 rounded-xl object-cover border-2 border-emerald-500 shadow-2xs shrink-0"
                   />
-                  <canvas ref={canvasRef} className="hidden" />
-
-                  {capturedSelfie && !isCameraActive && (
-                    <img 
-                      src={capturedSelfie} 
-                      alt="Selfie Kasir" 
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-
-                  {!isCameraActive && !capturedSelfie && (
-                    <div className="flex flex-col items-center justify-center text-gray-400 p-4 text-center">
-                      <Camera size={36} className="opacity-40 mb-1" />
-                      <p className="text-xs font-bold text-gray-300">Belum ada foto selfie</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">Ambil foto webcam untuk bukti verifikasi shift</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {!isCameraActive ? (
-                    <button
-                      type="button"
-                      onClick={startCamera}
-                      className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <Camera size={14} />
-                      <span>{capturedSelfie ? 'Foto Ulang' : 'Nyalakan Kamera'}</span>
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={takeSelfie}
-                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <Camera size={14} />
-                        <span>Ambil Foto Selfie</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={stopCamera}
-                        className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs font-bold transition cursor-pointer"
-                      >
-                        Batal
-                      </button>
-                    </>
-                  )}
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-blue-600 text-white font-black text-lg flex items-center justify-center shrink-0">
+                    {currentUser?.name?.charAt(0).toUpperCase() || 'K'}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full w-fit mb-0.5">
+                    <BadgeCheck size={12} /> Kasir Terverifikasi
+                  </div>
+                  <h4 className="text-sm font-extrabold text-gray-900 truncate">
+                    {employeeCodeInput || currentUser?.name || 'Kasir'}
+                  </h4>
+                  <p className="text-[10px] text-gray-500 font-medium">Absensi selfie & ID terkonfirmasi saat login</p>
                 </div>
               </div>
 

@@ -1,4 +1,4 @@
-import { Store, Receipt, CreditCard, Shield, Percent, DatabaseBackup } from 'lucide-react'
+import { Store, Receipt, CreditCard, Shield, Percent, DatabaseBackup, Clock } from 'lucide-react'
 import Link from 'next/link'
 
 export default function SettingsPage() {
@@ -47,6 +47,14 @@ export default function SettingsPage() {
           <div>
             <h3 className="font-bold text-gray-900 mb-1 group-hover:text-red-600 transition">Hak Akses & Otorisasi</h3>
             <p className="text-sm text-gray-500">Manajemen PIN Kasir, kontrol admin, log aktivitas (Audit Trail).</p>
+          </div>
+        </Link>
+
+        <Link href="/settings/shifts" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex gap-4 hover:shadow-md transition cursor-pointer hover:border-amber-300 group">
+          <div className="p-3 bg-amber-50 text-amber-600 rounded-lg h-fit group-hover:bg-amber-600 group-hover:text-white transition"><Clock size={24} /></div>
+          <div>
+            <h3 className="font-bold text-gray-900 mb-1 group-hover:text-amber-600 transition">Jam Kerja Shift</h3>
+            <p className="text-sm text-gray-500">Atur master jadwal jam operasional shift 1, shift 2, dan shift malam.</p>
           </div>
         </Link>
 
