@@ -2,12 +2,13 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { processCheckout } from '@/actions/pos'
+import { openShift, closeShift } from '@/actions/shift'
 import { 
   Search, ShoppingCart, Plus, Minus, Trash2, CheckCircle2, QrCode, 
   CreditCard, Banknote, Building2, Utensils, ShoppingBag, Truck, 
   FileText, Keyboard, X, Sparkles, AlertCircle, Layers, UtensilsCrossed, 
   CupSoda, Coffee, Cookie, IceCream, Package, Printer, Wifi, Clock, 
-  UserCheck, Receipt, ArrowRight, Zap, ShieldCheck
+  UserCheck, Receipt, ArrowRight, Zap, ShieldCheck, Lock, Unlock, Coins
 } from 'lucide-react'
 
 type Product = {
@@ -31,6 +32,14 @@ interface Props {
   initialProducts: Product[]
   initialCategories: Category[]
   initialCustomers: Customer[]
+  currentUser?: { id: string; name: string }
+  initialShift?: {
+    id: string
+    shiftNumber: string
+    startTime: string
+    startCash: number
+    notes: string | null
+  } | null
   storeConfig: {
     name: string
     taxActive: boolean
@@ -53,7 +62,7 @@ const CategorySvgIcon = ({ name, size = 15 }: { name: string; size?: number }) =
   return <Layers size={size} />
 }
 
-export default function PosClient({ initialProducts, initialCategories, initialCustomers, storeConfig }: Props) {
+export default function PosClient({ initialProducts, initialCategories, initialCustomers, currentUser, initialShift, storeConfig }: Props) {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
   const [selectedCustomer, setSelectedCustomer] = useState<string>('')
@@ -69,10 +78,67 @@ export default function PosClient({ initialProducts, initialCategories, initialC
   const [checkoutSuccess, setCheckoutSuccess] = useState<{ invoice: string; id: string; queueNumber?: number | null } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Shift Management States
+  const [activeShift, setActiveShift] = useState(initialShift || null)
+  const [showOpenShiftModal, setShowOpenShiftModal] = useState(!initialShift)
+  const [showCloseShiftModal, setShowCloseShiftModal] = useState(false)
+  const [startCashInput, setStartCashInput] = useState('500000')
+  const [actualCashInput, setActualCashInput] = useState('')
+  const [shiftNoteInput, setShiftNoteInput] = useState('')
+  const [shiftProcessing, setShiftProcessing] = useState(false)
+
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const [useTax, setUseTax] = useState(storeConfig.taxActive)
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+
+  const handleOpenShiftSubmit = async () => {
+    if (!currentUser?.id) return
+    const startCash = Number(startCashInput.replace(/[^0-9]/g, ''))
+    if (isNaN(startCash) || startCash < 0) {
+      setError('Masukkan nominal modal awal yang valid')
+      return
+    }
+
+    setShiftProcessing(true)
+    const res = await openShift({ userId: currentUser.id, startCash, notes: shiftNoteInput })
+    if (res.success && res.shift) {
+      setActiveShift({
+        id: res.shift.id,
+        shiftNumber: res.shift.shiftNumber,
+        startTime: res.shift.startTime.toISOString(),
+        startCash: Number(res.shift.startCash),
+        notes: res.shift.notes
+      })
+      setShowOpenShiftModal(false)
+      setShiftNoteInput('')
+    } else {
+      setError(res.error || 'Gagal membuka shift')
+    }
+    setShiftProcessing(false)
+  }
+
+  const handleCloseShiftSubmit = async () => {
+    if (!activeShift) return
+    const actualCash = Number(actualCashInput.replace(/[^0-9]/g, ''))
+    if (isNaN(actualCash) || actualCash < 0) {
+      setError('Masukkan nominal uang fisik di laci')
+      return
+    }
+
+    setShiftProcessing(true)
+    const res = await closeShift({ shiftId: activeShift.id, actualCash, notes: shiftNoteInput })
+    if (res.success && res.shift) {
+      setActiveShift(null)
+      setShowCloseShiftModal(false)
+      setActualCashInput('')
+      setShiftNoteInput('')
+      window.location.href = `/receipt/shift/${res.shift.id}`
+    } else {
+      setError(res.error || 'Gagal menutup shift')
+    }
+    setShiftProcessing(false)
+  }
   const discount = 0
   const taxAmount = useTax ? (subtotal - discount) * ((storeConfig.taxRate + storeConfig.serviceCharge) / 100) : 0
   const total = subtotal - discount + taxAmount
@@ -247,6 +313,12 @@ export default function PosClient({ initialProducts, initialCategories, initialC
   }
 
   const handleCheckout = async () => {
+    if (!activeShift) {
+      setShowOpenShiftModal(true)
+      setError('Buka shift kasir terlebih dahulu sebelum memproses transaksi!')
+      return
+    }
+
     const paid = Number(amountPaid.replace(/[^0-9]/g, ''))
     if (paymentMethod === 'CASH' && paid < total) {
       setError('Jumlah uang pembayaran kurang dari total!')
@@ -281,8 +353,6 @@ export default function PosClient({ initialProducts, initialCategories, initialC
     setIsProcessing(false)
   }
 
-
-
   return (
     <div className="flex flex-col lg:flex-row gap-5 h-full min-h-[calc(100vh-7.5rem)]">
       {/* Kiri: Katalog Produk & Kategori */}
@@ -301,9 +371,33 @@ export default function PosClient({ initialProducts, initialCategories, initialC
                 <ShieldCheck size={13} className="text-blue-500" /> Terhubung Ke Database
               </span>
             </div>
-            <div className="flex items-center gap-1.5 font-bold text-gray-600">
-              <Sparkles size={13} className="text-yellow-500" />
-              <span>{storeConfig.name}</span>
+
+            {/* Shift Status Badge */}
+            <div className="flex items-center gap-2 font-bold">
+              {activeShift ? (
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
+                    <Clock size={13} className="text-emerald-600 animate-pulse" />
+                    <span>Shift Aktif ({activeShift.shiftNumber})</span>
+                  </span>
+                  <button
+                    onClick={() => setShowCloseShiftModal(true)}
+                    className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-extrabold transition flex items-center gap-1 cursor-pointer"
+                    title="Tutup Shift & Rekap Kasir"
+                  >
+                    <Lock size={12} />
+                    <span>Tutup Shift</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowOpenShiftModal(true)}
+                  className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-extrabold transition shadow-xs flex items-center gap-1 cursor-pointer animate-pulse"
+                >
+                  <Unlock size={12} />
+                  <span>Buka Shift Kasir</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -761,6 +855,152 @@ export default function PosClient({ initialProducts, initialCategories, initialC
               >
                 <span>+ Transaksi Baru</span>
                 <ArrowRight size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Buka Shift Kasir */}
+      {showOpenShiftModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold border border-amber-100 shadow-2xs">
+                <Unlock size={20} />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-900 leading-tight">Buka Shift Kasir Baru</h3>
+                <p className="text-xs text-gray-500">Kasir: <strong className="text-gray-900">{currentUser?.name || 'Kasir'}</strong></p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Nominal Modal Awal di Laci (Rp)</label>
+                <input
+                  type="text"
+                  value={startCashInput}
+                  onChange={(e) => setStartCashInput(e.target.value)}
+                  placeholder="Contoh: 500000"
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base font-black text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+
+              {/* Presets */}
+              <div className="grid grid-cols-3 gap-2">
+                {[200000, 500000, 1000000].map(val => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setStartCashInput(val.toString())}
+                    className="py-1.5 px-2 bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700 border border-gray-200 rounded-lg text-xs font-extrabold transition cursor-pointer"
+                  >
+                    {formatRupiah(val)}
+                  </button>
+                ))}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Catatan Shift (Opsional)</label>
+                <input
+                  type="text"
+                  value={shiftNoteInput}
+                  onChange={(e) => setShiftNoteInput(e.target.value)}
+                  placeholder="Contoh: Shift Pagi Toko Utama"
+                  className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2">
+              {activeShift && (
+                <button
+                  onClick={() => setShowOpenShiftModal(false)}
+                  className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  Kembali
+                </button>
+              )}
+              <button
+                disabled={shiftProcessing}
+                onClick={handleOpenShiftSubmit}
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-extrabold transition shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {shiftProcessing ? 'Membuka Shift...' : 'Mulai Shift Kasir Sekarang'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Tutup Shift Kasir */}
+      {showCloseShiftModal && activeShift && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold border border-red-100 shadow-2xs">
+                  <Lock size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-gray-900 leading-tight">Tutup Shift Kasir</h3>
+                  <p className="text-xs text-gray-500">No. Shift: <strong className="font-mono text-gray-900">{activeShift.shiftNumber}</strong></p>
+                </div>
+              </div>
+              <button onClick={() => setShowCloseShiftModal(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 space-y-2 text-xs">
+              <div className="flex justify-between text-gray-600">
+                <span>Modal Awal Kasir:</span>
+                <span className="font-bold text-gray-900">{formatRupiah(activeShift.startCash)}</span>
+              </div>
+              <div className="flex justify-between text-gray-600">
+                <span>Waktu Buka Shift:</span>
+                <span className="font-medium text-gray-800">{new Date(activeShift.startTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Hitung Uang Fisik Sebenarnya di Laci (Rp)</label>
+                <input
+                  type="text"
+                  value={actualCashInput}
+                  onChange={(e) => setActualCashInput(e.target.value)}
+                  placeholder="Masukkan jumlah fisik uang kasir..."
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base font-black text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Catatan Penutupan (Opsional)</label>
+                <input
+                  type="text"
+                  value={shiftNoteInput}
+                  onChange={(e) => setShiftNoteInput(e.target.value)}
+                  placeholder="Contoh: Uang laci diserahkan ke Manajer"
+                  className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center gap-2">
+              <button
+                onClick={() => setShowCloseShiftModal(false)}
+                className="w-1/3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                disabled={shiftProcessing || !actualCashInput}
+                onClick={handleCloseShiftSubmit}
+                className="w-2/3 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-xl text-xs font-extrabold transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {shiftProcessing ? 'Memproses Tutup Shift...' : 'Selesaikan & Tutup Shift'}
               </button>
             </div>
           </div>

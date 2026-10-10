@@ -14,8 +14,14 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 800): P
   }
 }
 
+import { getSession } from '@/actions/auth'
+import { getCurrentShift } from '@/actions/shift'
+
 export default async function KasirPage() {
   try {
+    const session = await getSession()
+    const activeShift = session ? await getCurrentShift(session.userId) : null
+
     // Fetch products, categories, customers, and store info with automatic retry resilience
     const [products, categories, customers, store] = await withRetry(() => 
       Promise.all([
@@ -62,11 +68,21 @@ export default async function KasirPage() {
       phone: c.phone
     }))
 
+    const serializedShift = activeShift ? {
+      id: activeShift.id,
+      shiftNumber: activeShift.shiftNumber,
+      startTime: activeShift.startTime.toISOString(),
+      startCash: Number(activeShift.startCash),
+      notes: activeShift.notes
+    } : null
+
     return (
       <PosClient
         initialProducts={plainProducts}
         initialCategories={plainCategories}
         initialCustomers={plainCustomers}
+        currentUser={{ id: session?.userId || '', name: session?.name || 'Kasir' }}
+        initialShift={serializedShift}
         storeConfig={{
           name: store?.name || 'KASIRKU POS',
           taxActive: store?.taxActive || false,

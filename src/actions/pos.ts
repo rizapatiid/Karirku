@@ -123,12 +123,18 @@ export async function processCheckout(data: CheckoutData) {
 
       const invoiceNumber = `TRX-${dateStr}-${String(nextSeq).padStart(5, '0')}`
 
+      // 2.5 Check active open shift for cashier
+      const activeShift = await tx.shift.findFirst({
+        where: { userId: user.id, status: 'OPEN' }
+      })
+
       // 3. Create Sale
       const sale = await tx.sale.create({
         data: {
           invoiceNumber,
           queueNumber,
           userId: user.id,
+          shiftId: activeShift?.id || null,
           customerId: customerId,
           transactionDate: new Date(),
           subtotal,

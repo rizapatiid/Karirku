@@ -72,6 +72,7 @@ model Store {
   products Product[]
   sales    Sale[]
   queues   Queue[]
+  shifts   Shift[]
 
   @@map("stores")
 }
@@ -102,6 +103,7 @@ model User {
   stockMovements   StockMovement[]
   purchaseReturns  PurchaseReturn[]
   saleReturns      SaleReturn[]
+  shifts           Shift[]
 
   @@map("users")
 }
@@ -300,6 +302,7 @@ model Sale {
   storeId         String?
   customerId      String?
   userId          String
+  shiftId         String?
   invoiceNumber   String     @unique
   queueNumber     Int? // <--- ADDED QUEUE NUMBER
   transactionDate DateTime
@@ -319,6 +322,7 @@ model Sale {
   store      Store?       @relation(fields: [storeId], references: [id])
   customer   Customer?    @relation(fields: [customerId], references: [id])
   user       User         @relation(fields: [userId], references: [id])
+  shift      Shift?       @relation(fields: [shiftId], references: [id])
   items      SaleItem[]
   Payment    Payment[]
   SaleReturn SaleReturn[]
@@ -535,4 +539,38 @@ enum QueueStatus {
   SERVING
   DONE
   SKIPPED
+}
+
+model Shift {
+  id           String      @id @default(uuid())
+  storeId      String?
+  userId       String
+  shiftNumber  String      @unique
+  startTime    DateTime    @default(now())
+  endTime      DateTime?
+  startCash    Decimal     @db.Decimal(15, 2)
+  expectedCash Decimal?    @db.Decimal(15, 2)
+  actualCash   Decimal?    @db.Decimal(15, 2)
+  difference   Decimal?    @db.Decimal(15, 2)
+  totalSales   Decimal     @default(0) @db.Decimal(15, 2)
+  cashSales    Decimal     @default(0) @db.Decimal(15, 2)
+  nonCashSales Decimal     @default(0) @db.Decimal(15, 2)
+  cashOut      Decimal     @default(0) @db.Decimal(15, 2)
+  notes        String?     @db.Text
+  status       ShiftStatus @default(OPEN)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id])
+  store Store? @relation(fields: [storeId], references: [id])
+  sales Sale[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("shifts")
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
 }

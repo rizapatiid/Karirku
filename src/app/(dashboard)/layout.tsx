@@ -32,6 +32,7 @@ export default async function DashboardLayout({
       items: [
         { href: '/sales',    iconName: 'FileText',        label: 'Riwayat Penjualan',   roles: ['OWNER', 'ADMIN'] },
         { href: '/sales',    iconName: 'ClipboardList',   label: 'Transaksi Saya',      roles: ['KASIR'] },
+        { href: '/shifts',   iconName: 'Clock',           label: 'Shift & Rekap Kasir', roles: ['OWNER', 'ADMIN', 'KASIR'] },
         { href: '/queue',    iconName: 'Users2',          label: 'Antrian Pelanggan',   roles: ['OWNER', 'ADMIN', 'KASIR'] },
         { href: '/customers',iconName: 'Users',           label: 'Pelanggan',           roles: ['OWNER', 'KASIR'] },
       ]
