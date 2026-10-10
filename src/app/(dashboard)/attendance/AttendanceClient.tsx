@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { 
   UserCheck, Camera, Clock, CheckCircle2, AlertCircle, Plus, Search, 
   Filter, ArrowRight, ShieldCheck, Users, Warehouse, ShoppingBag, LogOut,
   XCircle, Calendar, RefreshCw, BadgeCheck
 } from 'lucide-react'
 import { clockInAttendance, clockOutAttendance } from '@/actions/attendance'
+import { validateCashierEmployee } from '@/actions/auth'
 
 interface AttendanceItem {
   id: string
@@ -39,14 +40,23 @@ interface Summary {
   clockedOutCount: number
 }
 
+interface ShiftScheduleItem {
+  id: string
+  name: string
+  startTime: string
+  endTime: string
+}
+
 export default function AttendanceClient({
   initialAttendances,
   initialSummary,
-  employees
+  employees,
+  initialShiftSchedules = []
 }: {
   initialAttendances: AttendanceItem[]
   initialSummary: Summary
   employees: { id: string; name: string; username: string }[]
+  initialShiftSchedules?: ShiftScheduleItem[]
 }) {
   const [attendances, setAttendances] = useState<AttendanceItem[]>(initialAttendances)
   const [summary, setSummary] = useState<Summary>(initialSummary)
@@ -60,8 +70,10 @@ export default function AttendanceClient({
   const [modalMode, setModalMode] = useState<'CLOCK_IN' | 'CLOCK_OUT'>('CLOCK_IN')
   const [selectedAttendanceForOut, setSelectedAttendanceForOut] = useState<AttendanceItem | null>(null)
 
-  // Form State
+  // Form State & Validation
   const [employeeInput, setEmployeeInput] = useState('')
+  const [validatedUser, setValidatedUser] = useState<{ id: string; name: string; username: string; role: string } | null>(null)
+  const [isValidating, setIsValidating] = useState(false)
   const [roleType, setRoleType] = useState<'KASIR' | 'GUDANG' | 'STAFF'>('KASIR')
   const [notes, setNotes] = useState('')
   const [capturedSelfie, setCapturedSelfie] = useState<string | null>(null)
@@ -74,6 +86,42 @@ export default function AttendanceClient({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  // Auto detect active shift based on master schedules or time fallbacks
+  const detectedShift = useMemo(() => {
+    const now = new Date()
+    const currentMin = now.getHours() * 60 + now.getMinutes()
+
+    if (initialShiftSchedules && initialShiftSchedules.length > 0) {
+      for (const sch of initialShiftSchedules) {
+        const [sH, sM] = sch.startTime.split(':').map(Number)
+        const [eH, eM] = sch.endTime.split(':').map(Number)
+        const startMin = sH * 60 + sM
+        const endMin = eH * 60 + eM
+
+        if (startMin < endMin) {
+          if (currentMin >= startMin && currentMin < endMin) {
+            return { name: sch.name, timeRange: `${sch.startTime} - ${sch.endTime} WIB` }
+          }
+        } else {
+          // Overnight shift e.g. 23:00 - 07:00
+          if (currentMin >= startMin || currentMin < endMin) {
+            return { name: sch.name, timeRange: `${sch.startTime} - ${sch.endTime} WIB` }
+          }
+        }
+      }
+    }
+
+    // Default time-based fallbacks if no DB master schedule match
+    const hour = now.getHours()
+    if (hour >= 7 && hour < 15) {
+      return { name: 'Shift 1 (Pagi)', timeRange: '07:00 - 15:00 WIB' }
+    } else if (hour >= 15 && hour < 23) {
+      return { name: 'Shift 2 (Sore)', timeRange: '15:00 - 23:00 WIB' }
+    } else {
+      return { name: 'Shift 3 (Malam)', timeRange: '23:00 - 07:00 WIB' }
+    }
+  }, [initialShiftSchedules])
 
   const startCamera = async () => {
     try {
@@ -118,6 +166,7 @@ export default function AttendanceClient({
     setModalMode('CLOCK_IN')
     setSelectedAttendanceForOut(null)
     setEmployeeInput('')
+    setValidatedUser(null)
     setRoleType('KASIR')
     setNotes('')
     setCapturedSelfie(null)
@@ -138,10 +187,31 @@ export default function AttendanceClient({
     setIsModalOpen(false)
   }
 
+  const handleValidateEmployee = async () => {
+    if (!employeeInput.trim()) {
+      setError('Silakan masukkan ID / Username / Nama Karyawan')
+      return
+    }
+
+    setIsValidating(true)
+    setError(null)
+
+    const res = await validateCashierEmployee(employeeInput)
+    if (res.success && res.user) {
+      setValidatedUser(res.user)
+      if (res.user.role === 'GUDANG') setRoleType('GUDANG')
+      else if (res.user.role === 'KASIR') setRoleType('KASIR')
+      else setRoleType('STAFF')
+    } else {
+      setError(res.error || 'ID Karyawan tidak ditemukan di database!')
+    }
+    setIsValidating(false)
+  }
+
   const handleClockInSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!employeeInput) {
-      setError('Silakan isi / pilih ID atau Nama Karyawan')
+    if (!validatedUser) {
+      setError('Silakan validasi ID Karyawan terlebih dahulu')
       return
     }
 
@@ -149,7 +219,7 @@ export default function AttendanceClient({
     setError(null)
 
     const res = await clockInAttendance({
-      employeeIdOrUsername: employeeInput,
+      employeeIdOrUsername: validatedUser.id,
       roleType,
       selfieData: capturedSelfie || undefined,
       notes
@@ -429,130 +499,185 @@ export default function AttendanceClient({
 
             {modalMode === 'CLOCK_IN' ? (
               <form onSubmit={handleClockInSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Pilih / Input ID & Nama Karyawan
-                  </label>
-                  <input
-                    type="text"
-                    value={employeeInput}
-                    onChange={(e) => setEmployeeInput(e.target.value)}
-                    placeholder="Ketik Nama / Username Karyawan..."
-                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                    required
-                  />
-
-                  {/* Preset Quick Select Employees */}
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {employees.slice(0, 4).map(emp => (
-                      <button
-                        key={emp.id}
-                        type="button"
-                        onClick={() => setEmployeeInput(emp.name)}
-                        className="px-2.5 py-1 bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700 rounded-lg text-[11px] font-bold transition cursor-pointer"
-                      >
-                        + {emp.name}
-                      </button>
-                    ))}
+                {/* Info Shift Aktif Saat Ini (Tampil Paling Atas Modal) */}
+                <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50/80 border border-amber-200/90 rounded-2xl flex items-center justify-between shadow-2xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black shadow-2xs shrink-0">
+                      <Clock size={16} />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-black text-amber-800 uppercase tracking-wider flex items-center gap-1">
+                        <span>⏰ Shift Aktif Saat Ini</span>
+                      </div>
+                      <div className="text-xs font-black text-gray-900 flex items-center gap-1.5 mt-0.5">
+                        <span className="text-amber-800 font-extrabold">{detectedShift.name}</span>
+                        <span className="text-gray-500 text-[10px] font-bold">({detectedShift.timeRange})</span>
+                      </div>
+                    </div>
                   </div>
+                  <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-200/60 shrink-0">
+                    Otomatis
+                  </span>
                 </div>
 
+                {/* Step 1: Input & Validasi ID Karyawan */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Peran Tugas Shift Ini</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: 'KASIR', label: 'Kasir', icon: ShoppingBag },
-                      { id: 'GUDANG', label: 'Gudang', icon: Warehouse },
-                      { id: 'STAFF', label: 'Staff Toko', icon: Users },
-                    ].map(item => {
-                      const Icon = item.icon
-                      const isSelected = roleType === item.id
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setRoleType(item.id as any)}
-                          className={`py-2 px-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition cursor-pointer ${
-                            isSelected 
-                              ? 'bg-blue-600 text-white border-blue-600 shadow-2xs' 
-                              : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                          }`}
-                        >
-                          <Icon size={16} />
-                          <span>{item.label}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Camera Box */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-gray-700 flex items-center justify-between">
-                    <span>Foto Selfie Absensi</span>
-                    {capturedSelfie && (
+                  <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center justify-between">
+                    <span>Input ID / Username / Nama Karyawan</span>
+                    {validatedUser && (
                       <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
-                        <BadgeCheck size={12} /> Foto Terverifikasi
+                        <CheckCircle2 size={12} /> ID Terverifikasi
                       </span>
                     )}
                   </label>
 
-                  <div className="relative w-full h-40 bg-gray-900 rounded-2xl overflow-hidden border border-gray-300 flex items-center justify-center">
-                    <video ref={videoRef} className={`w-full h-full object-cover ${isCameraActive ? 'block' : 'hidden'}`} />
-                    <canvas ref={canvasRef} className="hidden" />
-
-                    {capturedSelfie && !isCameraActive && (
-                      <img src={capturedSelfie} alt="Selfie" className="w-full h-full object-cover" />
-                    )}
-
-                    {!isCameraActive && !capturedSelfie && (
-                      <div className="flex flex-col items-center justify-center text-gray-400 p-4 text-center">
-                        <Camera size={32} className="opacity-40 mb-1" />
-                        <p className="text-xs font-bold text-gray-300">Ambil foto webcam selfie</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {!isCameraActive ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={employeeInput}
+                      onChange={(e) => { setEmployeeInput(e.target.value); setValidatedUser(null); }}
+                      placeholder="Masukkan ID / Username / Nama..."
+                      className="flex-1 px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      disabled={isValidating || !!validatedUser}
+                      required
+                    />
+                    {!validatedUser ? (
                       <button
                         type="button"
-                        onClick={startCamera}
-                        className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                        onClick={handleValidateEmployee}
+                        disabled={isValidating || !employeeInput.trim()}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-2xs flex items-center gap-1 cursor-pointer disabled:opacity-50 shrink-0"
                       >
-                        <Camera size={14} />
-                        <span>{capturedSelfie ? 'Foto Ulang' : 'Nyalakan Kamera'}</span>
+                        {isValidating ? 'Memvalidasi...' : 'Validasi ID'}
                       </button>
                     ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={takeSelfie}
-                          className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          <Camera size={14} />
-                          <span>Ambil Foto</span>
-                        </button>
-                        <button type="button" onClick={stopCamera} className="px-3 py-2 bg-gray-200 text-gray-700 rounded-xl text-xs font-bold">
-                          Batal
-                        </button>
-                      </>
+                      <button
+                        type="button"
+                        onClick={() => { setValidatedUser(null); stopCamera(); setCapturedSelfie(null); }}
+                        className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs font-bold transition cursor-pointer shrink-0"
+                      >
+                        Ganti Karyawan
+                      </button>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
-                  <button type="button" onClick={closeModal} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-bold">
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                  >
-                    <span>{loading ? 'Menyimpan...' : 'Simpan Absensi Masuk'}</span>
-                  </button>
-                </div>
+                {/* Step 2: Form Absensi (Tampil Setelah ID Karyawan Valid) */}
+                {validatedUser && (
+                  <div className="space-y-4 pt-1 border-t border-gray-100">
+                    {/* Card Karyawan Terverifikasi */}
+                    <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-2xl flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-base flex items-center justify-center shrink-0 shadow-xs">
+                        {validatedUser.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full w-fit mb-0.5">
+                          <BadgeCheck size={12} /> Karyawan Terdaftar
+                        </div>
+                        <h4 className="text-sm font-black text-gray-900 truncate">{validatedUser.name}</h4>
+                        <p className="text-[10px] text-gray-500 font-medium">@{validatedUser.username} • Role: {validatedUser.role}</p>
+                      </div>
+                    </div>
+
+                    {/* Selector Peran Shift */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Peran Tugas Shift Ini</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: 'KASIR', label: 'Kasir', icon: ShoppingBag },
+                          { id: 'GUDANG', label: 'Gudang', icon: Warehouse },
+                          { id: 'STAFF', label: 'Staff Toko', icon: Users },
+                        ].map(item => {
+                          const Icon = item.icon
+                          const isSelected = roleType === item.id
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => setRoleType(item.id as any)}
+                              className={`py-2 px-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition cursor-pointer ${
+                                isSelected 
+                                  ? 'bg-blue-600 text-white border-blue-600 shadow-2xs' 
+                                  : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                              }`}
+                            >
+                              <Icon size={16} />
+                              <span>{item.label}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Camera Box */}
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-gray-700 flex items-center justify-between">
+                        <span>Foto Selfie Absensi Masuk</span>
+                        {capturedSelfie && (
+                          <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
+                            <BadgeCheck size={12} /> Foto Terverifikasi
+                          </span>
+                        )}
+                      </label>
+
+                      <div className="relative w-full h-40 bg-gray-900 rounded-2xl overflow-hidden border border-gray-300 flex items-center justify-center">
+                        <video ref={videoRef} className={`w-full h-full object-cover ${isCameraActive ? 'block' : 'hidden'}`} />
+                        <canvas ref={canvasRef} className="hidden" />
+
+                        {capturedSelfie && !isCameraActive && (
+                          <img src={capturedSelfie} alt="Selfie" className="w-full h-full object-cover" />
+                        )}
+
+                        {!isCameraActive && !capturedSelfie && (
+                          <div className="flex flex-col items-center justify-center text-gray-400 p-4 text-center">
+                            <Camera size={32} className="opacity-40 mb-1" />
+                            <p className="text-xs font-bold text-gray-300">Ambil foto webcam selfie</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {!isCameraActive ? (
+                          <button
+                            type="button"
+                            onClick={startCamera}
+                            className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Camera size={14} />
+                            <span>{capturedSelfie ? 'Foto Ulang' : 'Nyalakan Kamera'}</span>
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={takeSelfie}
+                              className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <Camera size={14} />
+                              <span>Ambil Foto Selfie</span>
+                            </button>
+                            <button type="button" onClick={stopCamera} className="px-3 py-2 bg-gray-200 text-gray-700 rounded-xl text-xs font-bold">
+                              Batal
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                      <button type="button" onClick={closeModal} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-bold">
+                        Batal
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <span>{loading ? 'Menyimpan...' : 'Simpan Absensi Masuk'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </form>
             ) : (
               /* Clock Out Form */
